@@ -86,3 +86,10 @@ plan/                          Design notes and lessons learned
 | `private message`   | Bidirectional    | Direct message to one user           |
 | `presenter message` | Client to Server | Presenter sends with mode targeting  |
 | `force disconnect`  | Client to Server | Trigger disconnect (lifecycle demo)  |
+
+
+## References
+
+- [RFC 6455](https://datatracker.ietf.org/doc/html/rfc6455)
+- [WebSocket.org](https://websocket.org/)
+- [Alibaba Cloud Blog](https://www.alibabacloud.com/blog/master-websocket-end-to-end-observability-in-one-article_602915)
