@@ -2,6 +2,8 @@
 
 An interactive HTML presentation with live demos covering HTTP polling, Server-Sent Events, WebSocket, and real-time messaging patterns.
 
+**Live Demo:** https://sisyphusla.github.io/WebSocket-Slide/websocket-presentation.html
+
 ## Requirements
 
 - Node.js v18 or later
