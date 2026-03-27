@@ -1,0 +1,99 @@
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 160" width="100%">
+      <metadata />
+      <defs>
+            <style class="style-fonts">
+                  @font-face { font-family: Virgil; src:
+                  url(data:font/woff2;base64,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);
+                  }</style>
+      </defs>
+      <rect x="0" y="0" width="600" height="160" fill="#ffffff" />
+      <g stroke-linecap="round" transform="translate(10 10) rotate(0 75 35)">
+            <path d="M-1.3 -1.91 L148.71 -1.2 L150.19 71.87 L-0.61 71.39" stroke="none"
+                  stroke-width="0" fill="#4361ee" />
+            <path
+                  d="M0 0 C41.43 0.52, 86.79 -0.06, 150 0 M0 0 C38.1 -0.39, 74.08 -0.78, 150 0 M150 0 C149.07 20.01, 150.58 36.43, 150 70 M150 0 C151.12 14.48, 150.82 28.35, 150 70 M150 70 C115.29 70.11, 75.56 70.83, 0 70 M150 70 C94.23 70.1, 38.22 69.37, 0 70 M0 70 C-0.51 40.55, 0.91 15.1, 0 0 M0 70 C-0.88 48.8, -0.43 29.34, 0 0"
+                  stroke="#4361ee" stroke-width="2" fill="none" />
+      </g>
+      <g transform="translate(50 30) rotate(0 29.754981994628906 13.75)">
+            <text x="0" y="19.381999999999998" font-family="Virgil, Segoe UI Emoji" font-size="22px"
+                  fill="#ffffff" text-anchor="start" style="white-space: pre;" direction="ltr"
+                  dominant-baseline="alphabetic">Client</text>
+      </g>
+      <g stroke-linecap="round" transform="translate(440 10) rotate(0 75 35)">
+            <path d="M-1.29 -1.2 L150.19 1.87 L149.39 71.39 L0.32 71.34" stroke="none"
+                  stroke-width="0" fill="#4361ee" />
+            <path
+                  d="M0 0 C45.79 -0.44, 89.34 -1.18, 150 0 M0 0 C53.9 -0.68, 109.46 -1.21, 150 0 M150 0 C150.55 17.59, 147.89 40.48, 150 70 M150 0 C150.56 26.02, 149.79 52.62, 150 70 M150 70 C92.62 68.99, 39.48 70.09, 0 70 M150 70 C108.73 70.47, 68.55 70.99, 0 70 M0 70 C1.21 50.11, 0.01 29.49, 0 0 M0 70 C0.32 47.99, -0.35 23.79, 0 0"
+                  stroke="#4361ee" stroke-width="2" fill="none" />
+      </g>
+      <g transform="translate(480 30) rotate(0 33.93498229980469 13.75)">
+            <text x="0" y="19.381999999999998" font-family="Virgil, Segoe UI Emoji" font-size="22px"
+                  fill="#ffffff" text-anchor="start" style="white-space: pre;" direction="ltr"
+                  dominant-baseline="alphabetic">Server</text>
+      </g>
+      <g stroke-linecap="round">
+            <g transform="translate(160.5 35) rotate(0 139 0)">
+                  <path
+                        d="M0 0 C90.11 -0.55, 182.76 0.93, 278 0 M0 0 C99.66 -0.69, 199.56 -0.72, 278 0"
+                        stroke="#4361ee" stroke-width="2" fill="none" />
+            </g>
+            <g transform="translate(160.5 35) rotate(0 139 0)">
+                  <path
+                        d="M254.46 8.41 C261.13 4.89, 271.14 4.07, 278 0 M254.46 8.41 C262.72 5.02, 271.22 1.97, 278 0"
+                        stroke="#4361ee" stroke-width="2" fill="none" />
+            </g>
+            <g transform="translate(160.5 35) rotate(0 139 0)">
+                  <path
+                        d="M254.56 -8.69 C261.25 -6.62, 271.23 -1.85, 278 0 M254.56 -8.69 C262.62 -5.94, 271.08 -2.85, 278 0"
+                        stroke="#4361ee" stroke-width="2" fill="none" />
+            </g>
+      </g>
+      <mask />
+      <g stroke-linecap="round" transform="translate(230 15) rotate(0 60 15)">
+            <path d="M1.87 -0.61 L121.39 0.32 L121.34 28.38 L-1.96 29.97" stroke="none"
+                  stroke-width="0" fill="#ffffff" />
+            <path
+                  d="M0 0 C38.95 1.91, 80.59 1.78, 120 0 M0 0 C24.13 0.09, 48.54 0.78, 120 0 M120 0 C121.49 11.82, 120.75 20.37, 120 30 M120 0 C119.1 10.34, 120.71 18.72, 120 30 M120 30 C93.18 30.37, 64.88 31.83, 0 30 M120 30 C84.89 31.18, 49.09 30.44, 0 30 M0 30 C1.13 19.82, -1.01 7.58, 0 0 M0 30 C-1.14 20.29, -0.79 11.97, 0 0"
+                  stroke="#1a1a1a" stroke-width="1" fill="none" />
+      </g>
+      <g transform="translate(245 20) rotate(0 41.9129638671875 11.25)">
+            <text x="0" y="15.858" font-family="Virgil, Segoe UI Emoji" font-size="18px"
+                  fill="#1a1a1a" text-anchor="start" style="white-space: pre;" direction="ltr"
+                  dominant-baseline="alphabetic">Messages</text>
+      </g>
+      <g stroke-linecap="round">
+            <g transform="translate(439.5 65) rotate(0 -139 0)">
+                  <path
+                        d="M0 0 C-68.65 2.32, -140.56 1.73, -278 0 M0 0 C-76.13 -0.15, -151.4 -1.18, -278 0"
+                        stroke="#4361ee" stroke-width="2" fill="none" />
+            </g>
+            <g transform="translate(439.5 65) rotate(0 -139 0)">
+                  <path
+                        d="M-254.55 -8.68 C-259.3 -5.17, -268.24 -3.77, -278 0 M-254.55 -8.68 C-261.33 -5.91, -266.98 -4.88, -278 0"
+                        stroke="#4361ee" stroke-width="2" fill="none" />
+            </g>
+            <g transform="translate(439.5 65) rotate(0 -139 0)">
+                  <path
+                        d="M-254.46 8.42 C-259.16 7.66, -268.13 4.78, -278 0 M-254.46 8.42 C-261.21 6.53, -266.88 2.89, -278 0"
+                        stroke="#4361ee" stroke-width="2" fill="none" />
+            </g>
+      </g>
+      <mask />
+      <g stroke-linecap="round" transform="translate(230 48) rotate(0 60 15)">
+            <path d="M0.32 1.34 L118.38 -1.96 L119.97 28.45 L-1.85 28.6" stroke="none"
+                  stroke-width="0" fill="#ffffff" />
+            <path
+                  d="M0 0 C32.55 -2.62, 63.14 -1.24, 120 0 M0 0 C32.6 0.83, 63.4 -0.5, 120 0 M120 0 C120.21 12.04, 118.96 22.14, 120 30 M120 0 C119.73 6.17, 120.08 14.46, 120 30 M120 30 C79.98 30, 37.52 32.09, 0 30 M120 30 C80.11 30.35, 42.22 29.75, 0 30 M0 30 C-1.2 19.12, 1.16 6.86, 0 0 M0 30 C0.29 24.8, -0.11 18.43, 0 0"
+                  stroke="#1a1a1a" stroke-width="1" fill="none" />
+      </g>
+      <g transform="translate(245 53) rotate(0 41.9129638671875 11.25)">
+            <text x="0" y="15.858" font-family="Virgil, Segoe UI Emoji" font-size="18px"
+                  fill="#1a1a1a" text-anchor="start" style="white-space: pre;" direction="ltr"
+                  dominant-baseline="alphabetic">Messages</text>
+      </g>
+      <g transform="translate(175 125) rotate(0 120.83013916015625 12.5)">
+            <text x="0" y="17.619999999999997" font-family="Virgil, Segoe UI Emoji" font-size="20px"
+                  fill="#22c55e" text-anchor="start" style="white-space: pre;" direction="ltr"
+                  dominant-baseline="alphabetic">Connection stays open ✓</text>
+      </g>
+</svg>

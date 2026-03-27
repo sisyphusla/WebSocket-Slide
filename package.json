@@ -1,0 +1,13 @@
+{
+  "name": "websocket-presentation",
+  "version": "1.0.0",
+  "description": "WebSocket & Real-Time Communication presentation demo server",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "socket.io": "^4.8.0"
+  }
+}

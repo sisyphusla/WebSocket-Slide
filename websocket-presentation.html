@@ -1,0 +1,4910 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebSocket & Real-Time Communication</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ===========================================
+   CSS CUSTOM PROPERTIES — ELECTRIC STUDIO
+   =========================================== */
+      :root {
+        --bg-dark: #0a0a0a;
+        --bg-white: #ffffff;
+        --accent: #4361ee;
+        --accent-glow: rgba(67, 97, 238, 0.3);
+        --accent-hover: #5a7bff;
+        --text-dark: #0a0a0a;
+        --text-light: #ffffff;
+        --text-muted-dark: rgba(0, 0, 0, 0.9);
+        --text-muted-light: rgba(255, 255, 255, 0.5);
+        --green: #22c55e;
+        --amber: #f59e0b;
+        --red: #ef4444;
+        --font-display: 'Manrope', sans-serif;
+        --font-body: 'Manrope', sans-serif;
+        --title-size: clamp(2.5rem, 6vw, 5rem);
+        --h2-size: clamp(1.8rem, 4vw, 3rem);
+        --h3-size: clamp(1.3rem, 3vw, 2rem);
+        --body-size: clamp(1rem, 1.8vw, 1.4rem);
+        --small-size: clamp(0.8rem, 1.2vw, 1rem);
+        --slide-padding: clamp(2rem, 5vw, 5rem);
+        --content-gap: clamp(1.2rem, 3vw, 3rem);
+        --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+        --duration: 0.6s;
+      }
+
+      /* ===========================================
+   RESET
+   =========================================== */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      /* ===========================================
+   VIEWPORT FITTING: MANDATORY BASE STYLES
+   =========================================== */
+      html,
+      body {
+        height: 100%;
+        overflow-x: hidden;
+      }
+      html {
+        scroll-snap-type: y mandatory;
+        scroll-behavior: smooth;
+      }
+
+      .slide {
+        width: 100vw;
+        height: 100vh;
+        height: 100dvh;
+        overflow: hidden;
+        scroll-snap-align: start;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+      }
+
+      .slide-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        max-height: 100%;
+        overflow: hidden;
+        padding: var(--slide-padding);
+        padding-top: clamp(3rem, 8vh, 6rem);
+      }
+
+      .card,
+      .container,
+      .content-box {
+        max-width: min(95vw, 1200px);
+        max-height: min(80vh, 700px);
+      }
+
+      .feature-list,
+      .bullet-list {
+        gap: clamp(0.4rem, 1vh, 1rem);
+      }
+      .feature-list li,
+      .bullet-list li {
+        font-size: var(--body-size);
+        line-height: 1.4;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+        gap: clamp(0.5rem, 1.5vw, 1rem);
+      }
+
+      img,
+      .image-container {
+        max-width: 100%;
+        max-height: min(65vh, 550px);
+        object-fit: contain;
+      }
+
+      .diagram,
+      .flow,
+      .compare-blocks {
+        max-width: 90vw;
+      }
+
+      @media (max-height: 500px) {
+        :root {
+          --slide-padding: clamp(0.75rem, 3vw, 2rem);
+          --content-gap: clamp(0.4rem, 1.5vw, 1rem);
+          --title-size: clamp(1.25rem, 4.5vw, 2.5rem);
+          --h2-size: clamp(1rem, 3vw, 1.75rem);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.2s !important;
+        }
+        html {
+          scroll-behavior: auto;
+        }
+      }
+
+      /* ===========================================
+   ELECTRIC STUDIO — LAYOUT TYPES
+   =========================================== */
+      body {
+        font-family: var(--font-body);
+        background: var(--bg-dark);
+        color: var(--text-light);
+      }
+
+      .slide--dark {
+        background: var(--bg-dark);
+        color: var(--text-light);
+      }
+
+      .slide--light {
+        background: var(--bg-white);
+        color: var(--text-dark);
+      }
+
+      .slide--split {
+        flex-direction: column;
+      }
+
+      .slide--split .panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        padding: var(--slide-padding);
+        position: relative;
+      }
+
+      .slide--split .panel--top {
+        background: var(--bg-white);
+        color: var(--text-dark);
+        justify-content: flex-end;
+      }
+
+      .slide--split .panel--bottom {
+        background: var(--bg-dark);
+        color: var(--text-light);
+        justify-content: flex-start;
+      }
+
+      .accent-bar {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--accent);
+      }
+
+      .accent-bar--bottom {
+        bottom: 0;
+      }
+      .accent-bar--top {
+        top: 0;
+      }
+
+      /* ===========================================
+   TYPOGRAPHY
+   =========================================== */
+      .slide-title {
+        font-family: var(--font-display);
+        font-size: var(--title-size);
+        font-weight: 800;
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+      }
+
+      .slide-h2 {
+        font-family: var(--font-display);
+        font-size: var(--h2-size);
+        font-weight: 800;
+        line-height: 1.15;
+        letter-spacing: -0.01em;
+        text-align: center;
+      }
+
+      .slide-h3 {
+        font-family: var(--font-display);
+        font-size: var(--h3-size);
+        font-weight: 700;
+        line-height: 1.2;
+      }
+
+      .slide-body {
+        font-size: var(--body-size);
+        font-weight: 400;
+        line-height: 1.6;
+      }
+
+      .slide-small {
+        font-size: var(--small-size);
+        font-weight: 500;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .text-accent {
+        color: var(--accent);
+      }
+      .text-muted-dark {
+        color: var(--text-muted-dark);
+      }
+      .text-muted-light {
+        color: var(--text-muted-light);
+      }
+      .text-green {
+        color: var(--green);
+      }
+      .text-red {
+        color: var(--red);
+      }
+      .text-amber {
+        color: var(--amber);
+      }
+
+      /* ===========================================
+   CORNER MARKS & BADGES
+   =========================================== */
+      .corner-mark {
+        position: absolute;
+        font-size: var(--small-size);
+        font-weight: 500;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        opacity: 0.4;
+      }
+
+      .corner-tl {
+        top: clamp(0.8rem, 2vh, 1.5rem);
+        left: var(--slide-padding);
+      }
+      .corner-tr {
+        top: clamp(0.8rem, 2vh, 1.5rem);
+        right: var(--slide-padding);
+      }
+      .corner-bl {
+        bottom: clamp(0.8rem, 2vh, 1.5rem);
+        left: var(--slide-padding);
+      }
+      .corner-br {
+        bottom: clamp(0.8rem, 2vh, 1.5rem);
+        right: var(--slide-padding);
+      }
+
+      .badge {
+        display: inline-block;
+        background: var(--accent);
+        color: var(--text-light);
+        padding: 0.3em 0.8em;
+        font-size: var(--small-size);
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        border-radius: 2px;
+      }
+
+      /* ===========================================
+   DIAGRAM COMPONENTS
+   =========================================== */
+      .diagram {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: clamp(0.5rem, 2vw, 2rem);
+        width: 100%;
+      }
+
+      .diagram-v {
+        flex-direction: column;
+        gap: clamp(0.3rem, 1vh, 1rem);
+      }
+
+      .node {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: clamp(0.5rem, 1.5vw, 1rem) clamp(1rem, 2vw, 2rem);
+        border: 2px solid currentColor;
+        border-radius: 4px;
+        font-weight: 700;
+        font-size: var(--body-size);
+        white-space: nowrap;
+      }
+
+      .node--accent {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      .node--filled {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: var(--text-light);
+      }
+
+      .arrow-right,
+      .arrow-left,
+      .arrow-bidi {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        min-width: clamp(40px, 8vw, 120px);
+        position: relative;
+      }
+
+      .arrow-line {
+        flex: 1;
+        height: 2px;
+        background: var(--accent);
+      }
+
+      .arrow-right::after,
+      .arrow-left::before {
+        content: '';
+        border: clamp(4px, 0.5vw, 6px) solid transparent;
+      }
+
+      .arrow-right::after {
+        border-left: clamp(6px, 0.8vw, 10px) solid var(--accent);
+      }
+
+      .arrow-left::before {
+        border-right: clamp(6px, 0.8vw, 10px) solid var(--accent);
+      }
+
+      .arrow-label {
+        position: absolute;
+        top: calc(-1 * clamp(1rem, 2vh, 1.5rem));
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: var(--small-size);
+        white-space: nowrap;
+        color: var(--accent);
+        font-weight: 600;
+      }
+
+      .arrow-label--below {
+        top: auto;
+        bottom: calc(-1 * clamp(1rem, 2vh, 1.5rem));
+      }
+
+      /* Flow steps (horizontal) */
+      .flow {
+        display: flex;
+        align-items: center;
+        gap: clamp(0.3rem, 1vw, 0.8rem);
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .flow-step {
+        padding: clamp(0.4rem, 1vw, 0.7rem) clamp(0.8rem, 1.5vw, 1.2rem);
+        border-radius: 4px;
+        font-weight: 700;
+        font-size: var(--small-size);
+        text-align: center;
+        white-space: nowrap;
+      }
+
+      .flow-arrow {
+        font-size: var(--body-size);
+        color: var(--text-muted-light);
+      }
+
+      /* ===========================================
+   SEQUENCE DIAGRAM (for slide 4)
+   =========================================== */
+      .seq-col {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: clamp(0.2rem, 0.5vh, 0.5rem);
+        min-width: 0;
+      }
+
+      .seq-col h3 {
+        font-size: clamp(0.65rem, 1.2vw, 0.95rem);
+        font-weight: 800;
+        margin-bottom: clamp(0.2rem, 0.5vh, 0.5rem);
+      }
+
+      .seq-pair {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        gap: 0;
+        font-size: clamp(0.5rem, 0.8vw, 0.65rem);
+        position: relative;
+      }
+
+      .seq-arrow {
+        flex: 1;
+        height: 1.5px;
+        position: relative;
+      }
+
+      .seq-arrow--right {
+        background: var(--accent);
+      }
+      .seq-arrow--left {
+        background: var(--text-muted-dark);
+      }
+      .seq-arrow--right::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: -3px;
+        border: 3.5px solid transparent;
+        border-left: 5px solid var(--accent);
+      }
+      .seq-arrow--left::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: -3px;
+        border: 3.5px solid transparent;
+        border-right: 5px solid var(--text-muted-dark);
+      }
+
+      .seq-label {
+        position: absolute;
+        top: -1.2em;
+        font-size: clamp(0.45rem, 0.7vw, 0.55rem);
+        white-space: nowrap;
+      }
+      .seq-arrow--right .seq-label {
+        left: 20%;
+        color: var(--accent);
+      }
+      .seq-arrow--left .seq-label {
+        right: 20%;
+        color: var(--text-muted-dark);
+      }
+
+      .seq-endpoints {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        font-size: clamp(0.5rem, 0.7vw, 0.6rem);
+        font-weight: 700;
+        opacity: 0.5;
+        margin-bottom: clamp(0.1rem, 0.3vh, 0.3rem);
+      }
+
+      /* ===========================================
+   USER ICONS (for message patterns)
+   =========================================== */
+      .user-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: clamp(0.8rem, 2vw, 1.5rem);
+      }
+
+      .user-icon {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: clamp(0.2rem, 0.5vh, 0.4rem);
+        padding: clamp(0.6rem, 1.5vw, 1.2rem);
+        border-radius: 8px;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+      }
+
+      .user-icon .avatar {
+        width: clamp(56px, 6vw, 88px);
+        height: clamp(56px, 6vw, 88px);
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: clamp(1.2rem, 2.2vw, 1.8rem);
+        font-weight: 700;
+      }
+
+      .user-icon .name {
+        font-size: clamp(0.85rem, 1.3vw, 1.1rem);
+        font-weight: 600;
+        opacity: 0.6;
+      }
+
+      .user-icon--lit {
+        border-color: var(--accent);
+        background: rgba(67, 97, 238, 0.1);
+      }
+
+      .user-icon--lit .avatar {
+        background: var(--accent);
+        color: white;
+      }
+
+      .user-icon--lit .name {
+        opacity: 1;
+        color: var(--accent);
+      }
+
+      .user-icon--dim {
+        opacity: 0.3;
+      }
+
+      /* ===========================================
+   DEMO COMPONENTS
+   =========================================== */
+      .demo-slide .slide-content {
+        padding: clamp(0.8rem, 2vw, 2rem);
+        gap: clamp(0.3rem, 1vh, 0.8rem);
+      }
+
+      .demo-controls {
+        display: flex;
+        gap: clamp(0.3rem, 0.8vw, 0.6rem);
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .demo-input {
+        flex: 1;
+        min-width: 120px;
+        padding: clamp(0.3rem, 0.6vw, 0.5rem) clamp(0.5rem, 1vw, 0.8rem);
+        background: rgba(255, 255, 255, 0.08);
+        border: 1.5px solid rgba(255, 255, 255, 0.15);
+        border-radius: 4px;
+        color: var(--text-light);
+        font-family: var(--font-body);
+        font-size: var(--small-size);
+        outline: none;
+        transition: border-color 0.2s;
+      }
+
+      .demo-input:focus {
+        border-color: var(--accent);
+      }
+
+      .demo-btn {
+        padding: clamp(0.3rem, 0.6vw, 0.5rem) clamp(0.8rem, 1.5vw, 1.2rem);
+        background: var(--accent);
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-family: var(--font-body);
+        font-size: var(--small-size);
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.2s;
+        white-space: nowrap;
+      }
+
+      .demo-btn:hover {
+        background: var(--accent-hover);
+      }
+
+      .demo-btn--danger {
+        background: var(--red);
+      }
+      .demo-btn--danger:hover {
+        background: #dc2626;
+      }
+
+      .demo-select {
+        padding: clamp(0.3rem, 0.6vw, 0.5rem) clamp(0.5rem, 1vw, 0.8rem);
+        background: rgba(255, 255, 255, 0.08);
+        border: 1.5px solid rgba(255, 255, 255, 0.15);
+        border-radius: 4px;
+        color: var(--text-light);
+        font-family: var(--font-body);
+        font-size: var(--small-size);
+        outline: none;
+      }
+
+      .demo-body {
+        display: flex;
+        gap: clamp(0.3rem, 1vw, 0.8rem);
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+      }
+
+      .demo-col {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: clamp(0.2rem, 0.4vh, 0.4rem);
+        min-width: 0;
+        overflow: hidden;
+      }
+
+      .demo-col-label {
+        font-size: clamp(1.1rem, 2vw, 1.6rem);
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        padding-bottom: clamp(0.15rem, 0.3vh, 0.25rem);
+        border-bottom: 2px solid var(--accent);
+      }
+
+      .chat-area {
+        flex: 1;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: clamp(0.15rem, 0.3vh, 0.25rem);
+        font-size: clamp(0.8rem, 1.2vw, 1rem);
+        min-height: 0;
+      }
+
+      .chat-msg {
+        padding: clamp(0.15rem, 0.3vw, 0.25rem) clamp(0.3rem, 0.6vw, 0.5rem);
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 3px;
+        animation: msgIn 0.2s ease-out;
+      }
+
+      .network-log {
+        flex: 1;
+        overflow: hidden;
+        font-size: clamp(1rem, 1.6vw, 1.35rem);
+        font-family: 'Courier New', monospace;
+        min-height: 0;
+      }
+
+      .net-row {
+        display: flex;
+        gap: clamp(0.3rem, 0.5vw, 0.5rem);
+        padding: clamp(0.1rem, 0.2vh, 0.15rem) 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        animation: msgIn 0.15s ease-out;
+      }
+
+      .net-row .method {
+        color: var(--accent);
+        font-weight: 700;
+        min-width: 3em;
+      }
+      .net-row .url {
+        opacity: 0.6;
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .net-row .status {
+        min-width: 3em;
+        text-align: right;
+      }
+      .net-row .size {
+        min-width: 4em;
+        text-align: right;
+        color: var(--amber);
+      }
+
+      .counter-bar {
+        display: flex;
+        gap: clamp(0.5rem, 1.5vw, 1.5rem);
+        font-size: clamp(1rem, 1.6vw, 1.35rem);
+        padding: clamp(0.2rem, 0.4vh, 0.3rem) 0;
+      }
+
+      .counter-item {
+        display: flex;
+        gap: 0.4em;
+      }
+
+      .counter-item .label {
+        opacity: 0.5;
+      }
+      .counter-item .value {
+        font-weight: 700;
+        color: var(--accent);
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* Status indicator */
+      .status-indicator {
+        display: flex;
+        align-items: center;
+        gap: clamp(0.3rem, 0.8vw, 0.6rem);
+        font-size: clamp(0.7rem, 1.2vw, 1rem);
+        font-weight: 700;
+      }
+
+      .status-dot {
+        width: clamp(10px, 1.5vw, 16px);
+        height: clamp(10px, 1.5vw, 16px);
+        border-radius: 50%;
+        transition: all 0.3s;
+      }
+
+      .status-dot--green {
+        background: var(--green);
+        box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+      }
+      .status-dot--amber {
+        background: var(--amber);
+        box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+      }
+      .status-dot--red {
+        background: var(--red);
+        box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+      }
+
+      .event-log {
+        flex: 1;
+        overflow-y: auto;
+        font-family: 'Courier New', monospace;
+        font-size: clamp(0.8rem, 1.2vw, 1rem);
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+        min-height: 0;
+      }
+
+      .log-entry {
+        padding: clamp(0.1rem, 0.2vh, 0.2rem) clamp(0.3rem, 0.5vw, 0.5rem);
+        animation: msgIn 0.15s ease-out;
+      }
+
+      .log-entry .time {
+        opacity: 0.4;
+        margin-right: 0.5em;
+      }
+      .log-entry--info {
+        color: var(--text-light);
+      }
+      .log-entry--success {
+        color: var(--green);
+      }
+      .log-entry--warn {
+        color: var(--amber);
+      }
+      .log-entry--error {
+        color: var(--red);
+      }
+
+      /* User cards for message pattern demo */
+      .user-cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: clamp(0.6rem, 1.5vw, 1.2rem);
+        flex: 1;
+        min-height: 0;
+      }
+
+      .user-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: clamp(0.3rem, 0.6vh, 0.5rem);
+        padding: clamp(0.5rem, 1.2vw, 1rem);
+        background: rgba(255, 255, 255, 0.04);
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        border-radius: 6px;
+        transition: all 0.3s ease;
+        font-size: clamp(0.8rem, 1.2vw, 1rem);
+      }
+
+      .user-card .card-avatar {
+        width: clamp(28px, 3.5vw, 48px);
+        height: clamp(28px, 3.5vw, 48px);
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: clamp(0.8rem, 1.2vw, 1rem);
+      }
+
+      .user-card .card-name {
+        font-weight: 700;
+      }
+      .user-card .card-room {
+        font-size: clamp(0.65rem, 0.9vw, 0.8rem);
+        opacity: 0.5;
+      }
+
+      .user-card.flash {
+        border-color: var(--accent);
+        background: rgba(67, 97, 238, 0.15);
+        box-shadow: 0 0 12px var(--accent-glow);
+      }
+
+      .user-card.flash .card-avatar {
+        background: var(--accent);
+        color: white;
+      }
+
+      .user-card .msg-bubble {
+        font-size: clamp(0.7rem, 1vw, 0.9rem);
+        background: var(--accent);
+        color: white;
+        padding: 0.2em 0.5em;
+        border-radius: 3px;
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+
+      .user-card.flash .msg-bubble {
+        opacity: 1;
+      }
+
+      /* Chat demo */
+      .chat-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: clamp(0.2rem, 0.4vh, 0.3rem);
+      }
+
+      .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: clamp(0.15rem, 0.3vh, 0.25rem);
+        min-height: 0;
+      }
+
+      .chat-message {
+        padding: clamp(0.2rem, 0.4vw, 0.35rem) clamp(0.4rem, 0.8vw, 0.6rem);
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 4px;
+        font-size: clamp(0.8rem, 1.2vw, 1rem);
+        animation: msgIn 0.2s ease-out;
+      }
+
+      .chat-message .sender {
+        font-weight: 700;
+        color: var(--accent);
+        margin-right: 0.4em;
+      }
+
+      /* QR / URL display */
+      .url-display {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: clamp(0.5rem, 1.5vh, 1.5rem);
+        text-align: center;
+      }
+
+      .url-box {
+        padding: clamp(0.6rem, 1.5vw, 1.2rem) clamp(1rem, 3vw, 2.5rem);
+        background: rgba(255, 255, 255, 0.06);
+        border: 2px solid var(--accent);
+        border-radius: 8px;
+        font-family: 'Courier New', monospace;
+        font-size: clamp(1rem, 2.5vw, 2rem);
+        font-weight: 700;
+        color: var(--accent);
+        letter-spacing: 0.02em;
+      }
+
+      /* ===========================================
+   ANIMATIONS
+   =========================================== */
+      .reveal {
+        opacity: 0;
+        transform: translateY(25px);
+        transition:
+          opacity var(--duration) var(--ease-out-expo),
+          transform var(--duration) var(--ease-out-expo);
+      }
+
+      .reveal-left {
+        opacity: 0;
+        transform: translateX(-30px);
+        transition:
+          opacity var(--duration) var(--ease-out-expo),
+          transform var(--duration) var(--ease-out-expo);
+      }
+
+      .reveal-scale {
+        opacity: 0;
+        transform: scale(0.92);
+        transition:
+          opacity var(--duration) var(--ease-out-expo),
+          transform var(--duration) var(--ease-out-expo);
+      }
+
+      .slide.visible .reveal,
+      .slide.visible .reveal-left,
+      .slide.visible .reveal-scale {
+        opacity: 1;
+        transform: none;
+      }
+
+      .slide.visible .reveal:nth-child(1) {
+        transition-delay: 0.05s;
+      }
+      .slide.visible .reveal:nth-child(2) {
+        transition-delay: 0.15s;
+      }
+      .slide.visible .reveal:nth-child(3) {
+        transition-delay: 0.25s;
+      }
+      .slide.visible .reveal:nth-child(4) {
+        transition-delay: 0.35s;
+      }
+      .slide.visible .reveal:nth-child(5) {
+        transition-delay: 0.45s;
+      }
+      .slide.visible .reveal:nth-child(6) {
+        transition-delay: 0.55s;
+      }
+
+      @keyframes msgIn {
+        from {
+          opacity: 0;
+          transform: translateY(5px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes barGrow {
+        from {
+          transform: scaleX(0);
+        }
+        to {
+          transform: scaleX(1);
+        }
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.4;
+        }
+      }
+
+      /* ===========================================
+   PROGRESS BAR & NAV DOTS
+   =========================================== */
+      .progress-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 3px;
+        background: var(--accent);
+        z-index: 9999;
+        transition: width 0.3s ease-out;
+        width: 0%;
+      }
+
+      .nav-dots {
+        position: fixed;
+        right: clamp(0.5rem, 1.5vw, 1.5rem);
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: clamp(4px, 0.6vh, 8px);
+        z-index: 9998;
+      }
+
+      .nav-dot {
+        width: clamp(6px, 0.8vw, 10px);
+        height: clamp(6px, 0.8vw, 10px);
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        cursor: pointer;
+        transition: all 0.3s;
+        border: none;
+        padding: 0;
+      }
+
+      .nav-dot.active {
+        background: var(--accent);
+        transform: scale(1.3);
+      }
+
+      .nav-dot:hover {
+        background: rgba(255, 255, 255, 0.5);
+      }
+
+      /* Light slide adjustments for nav dots */
+      .slide--light ~ .nav-dots .nav-dot {
+        background: rgba(0, 0, 0, 0.15);
+      }
+
+      /* ===========================================
+   INLINE EDITING
+   =========================================== */
+      .edit-hotzone {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 80px;
+        height: 80px;
+        z-index: 10000;
+        cursor: pointer;
+      }
+
+      .edit-toggle {
+        position: fixed;
+        top: 12px;
+        left: 12px;
+        width: 36px;
+        height: 36px;
+        border-radius: 6px;
+        background: var(--accent);
+        color: white;
+        border: none;
+        font-size: 16px;
+        cursor: pointer;
+        z-index: 10001;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .edit-toggle.show,
+      .edit-toggle.active {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .edit-toggle.active {
+        background: var(--green);
+      }
+
+      [contenteditable='true'] {
+        outline: 2px dashed var(--accent);
+        outline-offset: 4px;
+        cursor: text;
+      }
+
+      .edit-save-toast {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%) translateY(100px);
+        background: var(--green);
+        color: white;
+        padding: 0.5em 1.5em;
+        border-radius: 6px;
+        font-size: var(--small-size);
+        font-weight: 700;
+        z-index: 10002;
+        transition: transform 0.3s var(--ease-out-expo);
+      }
+
+      .edit-save-toast.show {
+        transform: translateX(-50%) translateY(0);
+      }
+
+      /* ===========================================
+   SLIDE-SPECIFIC STYLES
+   =========================================== */
+
+      /* Slide 7: Code-like header display */
+      .header-block {
+        background: rgba(67, 97, 238, 0.05);
+        border-left: 3px solid var(--accent);
+        padding: clamp(0.4rem, 1vw, 0.8rem) clamp(0.6rem, 1.5vw, 1.2rem);
+        font-family: 'Courier New', monospace;
+        font-size: clamp(0.55rem, 0.9vw, 0.8rem);
+        line-height: 1.6;
+        border-radius: 0 4px 4px 0;
+      }
+
+      .header-block .key {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .header-block .val {
+        color: var(--text-dark);
+      }
+
+      /* Slide 13: Encrypted display */
+      .data-display {
+        padding: clamp(0.5rem, 1.2vw, 1rem);
+        border-radius: 6px;
+        font-family: 'Courier New', monospace;
+        font-size: clamp(0.5rem, 0.8vw, 0.7rem);
+        line-height: 1.5;
+        word-break: break-all;
+      }
+
+      .data-display--plain {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1.5px solid rgba(239, 68, 68, 0.3);
+        color: var(--red);
+      }
+
+      .data-display--encrypted {
+        background: rgba(34, 197, 94, 0.1);
+        border: 1.5px solid rgba(34, 197, 94, 0.3);
+        color: var(--green);
+      }
+
+      /* Slide 17: Use/Don't use checkmarks */
+      .check-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: clamp(0.3rem, 0.6vh, 0.6rem);
+      }
+
+      .check-list li {
+        font-size: var(--body-size);
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5em;
+        line-height: 1.4;
+      }
+
+      .check-list li::before {
+        font-weight: 800;
+        flex-shrink: 0;
+      }
+
+      .check-list--yes li::before {
+        content: '✓';
+        color: var(--green);
+      }
+      .check-list--no li::before {
+        content: '✗';
+        color: var(--red);
+      }
+
+      /* Columns helper */
+      .cols {
+        display: flex;
+        gap: clamp(1rem, 3vw, 3rem);
+        align-items: flex-start;
+      }
+
+      .cols > * {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* Section number */
+      .section-num {
+        font-size: clamp(0.6rem, 1vw, 0.85rem);
+        font-weight: 800;
+        color: var(--accent);
+        letter-spacing: 0.15em;
+        margin-bottom: clamp(0.3rem, 0.8vh, 0.8rem);
+      }
+
+      /* Comparison blocks */
+      .compare-blocks {
+        display: flex;
+        gap: clamp(0.5rem, 1.5vw, 1.5rem);
+      }
+
+      .compare-block {
+        flex: 1;
+        padding: clamp(0.6rem, 1.5vw, 1.2rem);
+        border-radius: 6px;
+        display: flex;
+        flex-direction: column;
+        gap: clamp(0.3rem, 0.6vh, 0.6rem);
+      }
+
+      .compare-block--dark {
+        background: rgba(67, 97, 238, 0.04);
+        border: 1.5px solid rgba(67, 97, 238, 0.15);
+      }
+
+      .compare-block--green {
+        background: rgba(34, 197, 94, 0.06);
+        border: 1.5px solid rgba(34, 197, 94, 0.2);
+      }
+
+      .compare-block--red {
+        background: rgba(239, 68, 68, 0.06);
+        border: 1.5px solid rgba(239, 68, 68, 0.2);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- === PROGRESS BAR === -->
+    <div class="progress-bar" id="progressBar"></div>
+
+    <!-- === NAVIGATION DOTS === -->
+    <nav class="nav-dots" id="navDots" aria-label="Slide navigation"></nav>
+
+    <!-- === INLINE EDITING (disabled) ===
+    <div class="edit-hotzone" id="editHotzone"></div>
+    <button class="edit-toggle" id="editToggle" title="Edit mode (E)">
+      &#9998;
+    </button>
+    <div class="edit-save-toast" id="saveToast">Saved!</div>
+    === -->
+
+    <!-- =============================================
+     SLIDE 1 — COVER
+     ============================================= -->
+    <section class="slide slide--split" id="slide-1">
+      <div class="panel panel--top">
+        <!-- <span class="corner-mark corner-tl text-muted-dark"
+          >Electric Studio</span
+        > -->
+        <span
+          class="badge"
+          style="
+            position: absolute;
+            top: clamp(0.8rem, 2vh, 1.5rem);
+            right: var(--slide-padding);
+          "
+          >RFC 6455</span
+        >
+        <div
+          class="accent-bar accent-bar--bottom"
+          style="
+            transform-origin: left;
+            animation: barGrow 0.8s var(--ease-out-expo) 0.5s both;
+          "
+        ></div>
+        <div class="slide-title reveal" style="max-width: 20ch">
+          WebSocket &<br /><span class="text-accent"
+            >Real-Time Communication</span
+          >
+        </div>
+      </div>
+      <div class="panel panel--bottom">
+        <div class="accent-bar accent-bar--top"></div>
+        <p
+          class="slide-title reveal"
+          style="transition-delay: 0.3s; color: white"
+        >
+          How the web talks in real time
+        </p>
+      </div>
+    </section>
+
+    <!-- =============================================
+     SLIDE 2 — AGENDA
+     ============================================= -->
+    <section class="slide slide--light" id="slide-2">
+      <div class="slide-content" style="gap: var(--content-gap)">
+        <h2 class="slide-h2 reveal">Agenda</h2>
+
+        <div
+          class="reveal"
+          style="
+            display: flex;
+            flex-direction: column;
+            gap: clamp(0.6rem, 1.5vh, 1.2rem);
+            width: 100%;
+            transition-delay: 0.2s;
+          "
+        >
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: clamp(1rem, 2vw, 2rem);
+              padding: clamp(0.8rem, 2vh, 1.5rem) clamp(1rem, 2vw, 2rem);
+              background: rgba(67, 97, 238, 0.06);
+              border-radius: 8px;
+            "
+          >
+            <span
+              style="
+                font-size: var(--h2-size);
+                font-weight: 800;
+                color: var(--accent);
+                min-width: 2ch;
+              "
+              >1</span
+            >
+            <span style="font-size: var(--h3-size); font-weight: 600"
+              >The Problem &mdash; HTTP & its limits</span
+            >
+          </div>
+
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: clamp(1rem, 2vw, 2rem);
+              padding: clamp(0.8rem, 2vh, 1.5rem) clamp(1rem, 2vw, 2rem);
+              background: rgba(67, 97, 238, 0.06);
+              border-radius: 8px;
+            "
+          >
+            <span
+              style="
+                font-size: var(--h2-size);
+                font-weight: 800;
+                color: var(--accent);
+                min-width: 2ch;
+              "
+              >2</span
+            >
+            <span style="font-size: var(--h3-size); font-weight: 600"
+              >WebSocket &mdash; persistent two-way connections</span
+            >
+          </div>
+
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: clamp(1rem, 2vw, 2rem);
+              padding: clamp(0.8rem, 2vh, 1.5rem) clamp(1rem, 2vw, 2rem);
+              background: rgba(67, 97, 238, 0.06);
+              border-radius: 8px;
+            "
+          >
+            <span
+              style="
+                font-size: var(--h2-size);
+                font-weight: 800;
+                color: var(--accent);
+                min-width: 2ch;
+              "
+              >3</span
+            >
+            <span style="font-size: var(--h3-size); font-weight: 600"
+              >Staying Connected &mdash; lifecycle, heartbeat,
+              reconnection</span
+            >
+          </div>
+
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: clamp(1rem, 2vw, 2rem);
+              padding: clamp(0.8rem, 2vh, 1.5rem) clamp(1rem, 2vw, 2rem);
+              background: rgba(67, 97, 238, 0.06);
+              border-radius: 8px;
+            "
+          >
+            <span
+              style="
+                font-size: var(--h2-size);
+                font-weight: 800;
+                color: var(--accent);
+                min-width: 2ch;
+              "
+              >4</span
+            >
+            <span style="font-size: var(--h3-size); font-weight: 600"
+              >Patterns &mdash; broadcast, room, one-to-one</span
+            >
+          </div>
+
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: clamp(1rem, 2vw, 2rem);
+              padding: clamp(0.8rem, 2vh, 1.5rem) clamp(1rem, 2vw, 2rem);
+              background: rgba(67, 97, 238, 0.06);
+              border-radius: 8px;
+            "
+          >
+            <span
+              style="
+                font-size: var(--h2-size);
+                font-weight: 800;
+                color: var(--accent);
+                min-width: 2ch;
+              "
+              >5</span
+            >
+            <span style="font-size: var(--h3-size); font-weight: 600"
+              >Real World &mdash; trade-offs, live demo</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =============================================
+     SLIDE 3 — HTTP REQUEST-RESPONSE MODEL
+     ============================================= -->
+    <section class="slide slide--light" id="slide-3">
+      <div
+        class="slide-content"
+        style="gap: var(--content-gap); align-items: center"
+      >
+        <h2 class="slide-h2 reveal">How HTTP Works</h2>
+        <img
+          src="/assets/http-request-response.svg"
+          alt="HTTP Request-Response Model"
+          class="reveal"
+          style="
+            width: 95vw;
+            max-width: none;
+            height: 60vh;
+            max-height: none;
+            object-fit: contain;
+            align-self: center;
+          "
+        />
+        <p class="slide-body reveal" style="font-size: var(--h3-size)">
+          The client sends a request, the server sends back a response.
+          <strong>Then the connection is done.</strong>
+        </p>
+      </div>
+    </section>
+
+    <!-- =============================================
+     SLIDE 4 — ALTERNATIVES BEFORE WEBSOCKET
+     ============================================= -->
+    <section class="slide slide--light" id="slide-4">
+      <div
+        class="slide-content"
+        style="gap: var(--content-gap); align-items: center"
+      >
+        <h2 class="slide-h2 reveal">What if we want real-time with HTTP?</h2>
+        <img
+          src="/assets/polling-comparison.svg"
+          alt="Polling Comparison: Short Polling vs Long Polling vs SSE"
+          class="reveal"
+          style="
+            width: 95vw;
+            max-width: none;
+            height: 80vh;
+            max-height: none;
+            object-fit: contain;
+            align-self: center;
+          "
+        />
+      </div>
+    </section>
+
+    <!-- =============================================
+     SLIDE 5 — DEMO: POLLING COMPARISON
+     ============================================= -->
+    <section
+      class="slide slide--dark demo-slide"
+      id="slide-5"
+      data-demo="polling-compare"
+    >
+      <div class="slide-content" style="overflow: hidden">
+        <div
+          class="reveal"
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+          "
+        >
+          <h2 class="slide-h3">Demo: Three Methods Compared</h2>
+          <div class="demo-controls">
+            <input
+              type="text"
+              class="demo-input"
+              id="demo5-input"
+              placeholder="Type a message..."
+              style="max-width: 200px"
+            />
+            <button class="demo-btn" id="demo5-send">Send</button>
+            <button
+              class="demo-btn"
+              id="demo5-reset"
+              style="background: rgba(255, 255, 255, 0.1)"
+            >
+              Reset
+            </button>
+          </div>
+        </div>
+        <div class="demo-body reveal" style="transition-delay: 0.15s">
+          <div class="demo-col">
+            <div class="demo-col-label">Short Polling</div>
+            <div class="network-log" id="demo5-sp-net"></div>
+          </div>
+          <div class="demo-col">
+            <div class="demo-col-label">Long Polling</div>
+            <div class="network-log" id="demo5-lp-net"></div>
+          </div>
+          <div class="demo-col">
+            <div class="demo-col-label">SSE</div>
+            <div class="network-log" id="demo5-sse-net"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =============================================
+     SLIDE 6 — HTTP vs WEBSOCKET
+     ============================================= -->
+    <section class="slide slide--light" id="slide-6">
+      <div
+        class="slide-content"
+        style="gap: var(--content-gap); align-items: center"
+      >
+        <h2 class="slide-h2 reveal">HTTP vs WebSocket</h2>
+        <img
+          src="/assets/http-vs-websocket.svg"
+          alt="HTTP vs WebSocket comparison"
+          class="reveal"
+          style="
+            width: 95vw;
+            max-width: none;
+            height: 80vh;
+            max-height: none;
+            object-fit: contain;
+            align-self: center;
+          "
+        />
+      </div>
+    </section>
+    <!-- =============================================
+     SLIDE 7 — HTTP REQUEST COST BREAKDOWN
+     ============================================= -->
+    <section class="slide slide--light" id="slide-7">
+      <div
+        class="slide-content"
+        style="gap: var(--content-gap); align-items: center"
+      >
+        <h2 class="slide-h2 reveal">The Cost of One HTTP Request</h2>
+        <p
+          class="slide-body reveal"
+          style="text-align: center; font-size: var(--h3-size)"
+        >
+          Every HTTP request carries overhead — even when the server has nothing
+          new to say.
+        </p>
+        <div
+          style="
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            gap: var(--content-gap);
+          "
+        >
+          <div
+            class="reveal"
+            style="
+              width: 100%;
+              display: flex;
+              flex-direction: column;
+              gap: clamp(1.5rem, 3vh, 2.5rem);
+              transition-delay: 0.2s;
+            "
+          >
+            <!-- Stacked bar chart -->
+            <div
+              style="
+                display: flex;
+                flex-direction: column;
+                gap: clamp(1rem, 2vh, 1.8rem);
+                width: 100%;
+              "
+            >
+              <!-- HTTP Request — stacked horizontal bar -->
+              <div
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 0.4rem;
+                  width: 100%;
+                "
+              >
+                <div
+                  class="text-amber"
+                  style="font-weight: 700; font-size: var(--body-size)"
+                >
+                  HTTP Request — per request overhead
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    width: 100%;
+                    height: clamp(6rem, 16vh, 10rem);
+                    border-radius: 8px;
+                    overflow: hidden;
+                  "
+                >
+                  <div
+                    style="
+                      flex: 0 0 25%;
+                      background: var(--amber);
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      color: #000;
+                      font-weight: 700;
+                      font-size: var(--h3-size);
+                      padding: 0 1rem;
+                      text-align: center;
+                      border-right: 2px solid #fff;
+                    "
+                  >
+                    TCP Handshake<br /><span
+                      style="opacity: 0.7; font-size: 0.7em"
+                      >~1 RTT</span
+                    >
+                  </div>
+                  <div
+                    style="
+                      flex: 1;
+                      background: rgba(245, 158, 11, 0.72);
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      color: #000;
+                      font-weight: 700;
+                      font-size: var(--h3-size);
+                      padding: 0 1.5rem;
+                      text-align: center;
+                      border-right: 2px solid #fff;
+                      line-height: 1.8;
+                    "
+                  >
+                    Headers: 200–800 bytes<br /><span
+                      style="opacity: 0.7; font-size: 0.7em"
+                      >: cookies, auth, content-type…</span
+                    >
+                  </div>
+                  <div
+                    style="
+                      flex: 0 0 8%;
+                      background: rgba(245, 158, 11, 0.35);
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      color: #000;
+                      font-size: var(--body-size);
+                      padding: 0 0.3rem;
+                      text-align: center;
+                      white-space: nowrap;
+                    "
+                  >
+                    Body ≈ 0
+                  </div>
+                </div>
+                <div
+                  style="
+                    text-align: right;
+                    font-size: var(--small-size);
+                    color: var(--amber);
+                    font-weight: 600;
+                  "
+                >
+                  ~800+ bytes per request
+                </div>
+              </div>
+
+              <!-- WebSocket Frame — stacked horizontal bar -->
+              <div
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  gap: 0.4rem;
+                  width: 100%;
+                "
+              >
+                <div
+                  class="text-accent"
+                  style="font-weight: 700; font-size: var(--body-size)"
+                >
+                  WebSocket Frame
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    width: 100%;
+                    border-radius: 8px;
+                    overflow: hidden;
+                  "
+                >
+                  <div style="display: flex; height: clamp(6rem, 16vh, 10rem)">
+                    <div
+                      style="
+                        width: clamp(200px, 23vw, 320px);
+                        background: var(--accent);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: #fff;
+                        font-weight: 700;
+                        font-size: var(--h3-size);
+                        padding: 0 1rem;
+                        text-align: center;
+                        border-right: 2px solid #fff;
+                        border-radius: 8px 0 0 8px;
+                        white-space: nowrap;
+                      "
+                    >
+                      Header: 2–14 bytes
+                    </div>
+                    <div
+                      style="
+                        width: clamp(160px, 18vw, 280px);
+                        background: rgba(67, 97, 238, 0.5);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: #fff;
+                        font-weight: 700;
+                        font-size: var(--h3-size);
+                        padding: 0 1rem;
+                        text-align: center;
+                        border-radius: 0 8px 8px 0;
+                        white-space: nowrap;
+                      "
+                    >
+                      Payload
+                    </div>
+                  </div>
+                </div>
+                <div
+                  style="
+                    text-align: left;
+                    font-size: var(--small-size);
+                    color: var(--accent);
+                    font-weight: 600;
+                  "
+                >
+                  ~6 bytes overhead
+                </div>
+              </div>
+            </div>
+
+            <!-- Bottom summary -->
+            <div
+              class="reveal"
+              style="text-align: center; transition-delay: 0.4s"
+            >
+              <p
+                style="
+                  font-size: var(--h3-size);
+                  color: var(--text-muted-dark);
+                  line-height: 1.3;
+                "
+              >
+                1 user polling every 2s —
+                <span style="color: var(--amber)">nothing happening</span> —
+                burns <strong style="color: var(--amber)">1.4 MB</strong> of
+                headers per hour. 1,000 users? That's
+                <strong style="color: var(--amber)">1.4 GB</strong>.
+              </p>
+              <p
+                style="
+                  font-size: var(--h3-size);
+                  color: var(--text-muted-dark);
+                  margin-top: 0.4em;
+                "
+              >
+                WebSocket: same job,
+                <strong style="color: var(--accent)">~6 bytes</strong>.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =============================================
+     SLIDE 8 — DEMO: POLLING VS WEBSOCKET
+     ============================================= -->
+    <section
+      class="slide slide--dark demo-slide"
+      id="slide-8"
+      data-demo="overhead-compare"
+    >
+      <div class="slide-content">
+        <div
+          class="reveal"
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+          "
+        >
+          <h2 class="slide-h3">Demo: HTTP Polling vs WebSocket</h2>
+          <div class="demo-controls">
+            <input
+              type="text"
+              class="demo-input"
+              id="demo8-input"
+              placeholder="Type a message..."
+              style="max-width: 200px"
+            />
+            <button class="demo-btn" id="demo8-send">Send</button>
+            <button
+              class="demo-btn"
+              id="demo8-reset"
+              style="background: rgba(255, 255, 255, 0.1)"
+            >
+              Reset
+            </button>
+          </div>
+        </div>
+        <div class="demo-body reveal" style="transition-delay: 0.15s">
+          <div class="demo-col">
+            <div class="demo-col-label" style="border-color: var(--amber)">
+              HTTP Short Polling
+            </div>
+            <div class="network-log" id="demo8-poll-net"></div>
+            <div class="counter-bar">
+              <span class="counter-item"
+                ><span class="label">Requests:</span
+                ><span class="value" id="demo8-poll-reqs">0</span></span
+              >
+              <span class="counter-item"
+                ><span class="label">Overhead:</span
+                ><span
+                  class="value"
+                  id="demo8-poll-overhead"
+                  style="color: var(--amber)"
+                  >0</span
+                ></span
+              >
+              <span class="counter-item"
+                ><span class="label">Payload:</span
+                ><span class="value" id="demo8-poll-payload">0</span></span
+              >
+            </div>
+          </div>
+          <div class="demo-col">
+            <div class="demo-col-label">WebSocket</div>
+            <div class="network-log" id="demo8-ws-net"></div>
+            <div class="counter-bar">
+              <span class="counter-item"
+                ><span class="label">Frames:</span
+                ><span class="value" id="demo8-ws-reqs">0</span></span
+              >
+              <span class="counter-item"
+                ><span class="label">Overhead:</span
+                ><span
+                  class="value"
+                  id="demo8-ws-overhead"
+                  style="color: var(--accent)"
+                  >0</span
+                ></span
+              >
+              <span class="counter-item"
+                ><span class="label">Payload:</span
+                ><span class="value" id="demo8-ws-payload">0</span></span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- =============================================
+     SLIDE 9 — CONNECTION LIFECYCLE
+     ============================================= -->
+    <section class="slide slide--light" id="slide-9">
+      <div
+        class="slide-content"
+        style="gap: var(--content-gap); align-items: center"
+      >
+        <h2 class="slide-h2 reveal">Connection Lifecycle</h2>
+        <p
+          class="slide-body reveal"
+          style="text-align: center; font-size: var(--h3-size)"
+        >
+          A WebSocket connection goes through four stages:
+        </p>
+        <div
+          style="
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            gap: var(--content-gap);
+          "
+        >
+          <!-- Color bar -->
+          <div
+            class="reveal"
+            style="
+              display: flex;
+              width: 100%;
+              height: clamp(6rem, 16vh, 10rem);
+              border-radius: 8px;
+              overflow: hidden;
+              transition-delay: 0.25s;
+            "
+          >
+            <div
+              style="
+                flex: 0 0 15%;
+                background: rgba(67, 97, 238, 0.15);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-right: 2px solid #fff;
+              "
+            >
+              <strong style="color: #4361ee; font-size: var(--h3-size)"
+                >Opening</strong
+              >
+            </div>
+            <div
+              style="
+                flex: 1;
+                background: rgba(34, 197, 94, 0.15);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-right: 2px solid #fff;
+              "
+            >
+              <strong style="color: #22c55e; font-size: var(--h3-size)"
+                >Open</strong
+              >
+            </div>
+            <div
+              style="
+                flex: 0 0 20%;
+                background: rgba(245, 158, 11, 0.15);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-right: 2px solid #fff;
+              "
+            >
+              <strong style="color: #f59e0b; font-size: var(--h3-size)"
+                >Closing</strong
+              >
+            </div>
+            <div
+              style="
+                flex: 0 0 20%;
+                background: rgba(239, 68, 68, 0.15);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              "
+            >
+              <strong style="color: #ef4444; font-size: var(--h3-size)"
+                >Reconnecting</strong
+              >
+            </div>
+          </div>
+          <!-- Descriptions below bar -->
+          <div
+            class="reveal"
+            style="display: flex; width: 100%; transition-delay: 0.35s"
+          >
+            <div
+              style="
+                flex: 0 0 20%;
+                padding: 0.8rem 0.5rem 0;
+                text-align: start;
+                font-size: var(--h3-size);
+                color: var(--text-muted-dark);
+              "
+            >
+              Start connection
+            </div>
+            <div
+              style="
+                flex: 1;
+                padding: 0.8rem 0.5rem 0;
+                text-align: center;
+                font-size: var(--h3-size);
+                color: var(--text-muted-dark);
+              "
+            >
+              Send and receive messages
+            </div>
+            <div
+              style="
+                flex: 0 0 20%;
+                padding: 0.8rem 0.5rem 0;
+                text-align: center;
+                font-size: var(--h3-size);
+                color: var(--text-muted-dark);
+              "
+            >
+              End the connection
+            </div>
+            <div
+              style="
+                flex: 0 0 20%;
+                padding: 0.8rem 0.5rem 0;
+                text-align: center;
+                font-size: var(--h3-size);
+                color: var(--text-muted-dark);
+              "
+            >
+              Retry after failure
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =============================================
+     SLIDE 10 — HEARTBEAT (PING/PONG)
+     ============================================= -->
+    <section class="slide slide--light" id="slide-10">
+      <style>
+        /* Slide 10 — Ping/Pong */
+        #s10-wire-area {
+          position: relative;
+          height: clamp(80px, 15vh, 140px);
+          overflow: visible;
+        }
+        #s10-wire {
+          position: absolute;
+          top: 50%;
+          left: 0;
+          right: 0;
+          height: 1px;
+        }
+        #s10-wire::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: repeating-linear-gradient(
+            90deg,
+            rgba(0, 0, 0, 0.12) 0 6px,
+            transparent 6px 12px
+          );
+        }
+        .s10-wire-dot {
+          position: absolute;
+          top: 50%;
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: rgba(0, 0, 0, 0.15);
+          transform: translateY(-50%);
+        }
+        .s10-wire-dot.left {
+          left: -3px;
+        }
+        .s10-wire-dot.right {
+          right: -3px;
+        }
+        .s10-packet {
+          position: absolute;
+          top: 50%;
+          transform: translate(-50%, -50%);
+          padding: 5px 16px;
+          border-radius: 20px;
+          font-size: var(--body-size);
+          font-weight: 600;
+          font-family: var(--font-body);
+          white-space: nowrap;
+          z-index: 3;
+          opacity: 0;
+          pointer-events: none;
+        }
+        .s10-packet.ping {
+          background: rgba(67, 97, 238, 0.1);
+          color: #4361ee;
+          border: 1px solid rgba(67, 97, 238, 0.3);
+        }
+        .s10-packet.pong {
+          background: rgba(34, 197, 94, 0.1);
+          color: #22c55e;
+          border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+        @keyframes s10FlyR {
+          0% {
+            left: 2%;
+            opacity: 0;
+          }
+          2% {
+            opacity: 1;
+          }
+          98% {
+            opacity: 1;
+          }
+          100% {
+            left: 98%;
+            opacity: 0;
+          }
+        }
+        @keyframes s10FlyL {
+          0% {
+            left: 98%;
+            opacity: 0;
+          }
+          2% {
+            opacity: 1;
+          }
+          98% {
+            opacity: 1;
+          }
+          100% {
+            left: 2%;
+            opacity: 0;
+          }
+        }
+        .s10-packet.fly-r {
+          animation: s10FlyR 5s linear forwards;
+        }
+        .s10-packet.fly-l {
+          animation: s10FlyL 5s linear forwards;
+        }
+        .s10-endpoint {
+          text-align: center;
+          width: clamp(120px, 15vw, 200px);
+          flex-shrink: 0;
+          z-index: 2;
+        }
+        .s10-endpoint-box {
+          border: 1px solid rgba(0, 0, 0, 0.12);
+          border-radius: 12px;
+          padding: clamp(1rem, 2.5vh, 1.8rem) clamp(0.8rem, 1.5vw, 1.5rem);
+          background: #fff;
+          transition: border-color 0.3s;
+        }
+        .s10-endpoint-box.s10-hl-ping {
+          border-color: #4361ee;
+        }
+        .s10-endpoint-box.s10-hl-pong {
+          border-color: #22c55e;
+        }
+        .s10-endpoint-icon {
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 0 auto 8px;
+          font-weight: 600;
+          font-size: 18px;
+        }
+        .s10-icon-client {
+          background: rgba(67, 97, 238, 0.1);
+          color: #4361ee;
+        }
+        .s10-icon-server {
+          background: rgba(34, 197, 94, 0.1);
+          color: #22c55e;
+        }
+        .s10-endpoint-label {
+          font-size: var(--h3-size);
+          font-weight: 700;
+          color: #1a1a1a;
+        }
+        .s10-endpoint-status {
+          font-size: var(--small-size);
+          margin-top: 4px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 4px;
+          color: #6b7280;
+        }
+        .s10-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          flex-shrink: 0;
+          transition: background 0.3s;
+        }
+        .s10-dot.ok {
+          background: #22c55e;
+        }
+        .s10-stats {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: clamp(0.4rem, 1vw, 0.8rem);
+          width: 100%;
+        }
+        .s10-stat {
+          background: #f0efec;
+          border-radius: 8px;
+          padding: clamp(0.5rem, 1.2vh, 0.8rem) 0.5rem;
+          text-align: center;
+        }
+        .s10-stat-label {
+          font-size: var(--small-size);
+          color: #9ca3af;
+          text-transform: uppercase;
+          letter-spacing: 0.4px;
+        }
+        .s10-stat-value {
+          font-size: var(--h3-size);
+          font-weight: 600;
+          margin-top: 2px;
+          font-variant-numeric: tabular-nums;
+        }
+        .s10-log {
+          border: 1px solid rgba(0, 0, 0, 0.08);
+          border-radius: 12px;
+          overflow: hidden;
+          width: 100%;
+          margin-top: auto;
+        }
+        .s10-log-header {
+          padding: 6px 12px;
+          font-size: var(--small-size);
+          font-weight: 500;
+          color: #9ca3af;
+          background: #f9fafb;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          text-transform: uppercase;
+          letter-spacing: 0.3px;
+        }
+        .s10-log-list {
+          height: 12em;
+          overflow-y: auto;
+          padding: 2px 0;
+          line-height: 1.5em;
+        }
+        .s10-log-list::-webkit-scrollbar {
+          width: 4px;
+        }
+        .s10-log-list::-webkit-scrollbar-thumb {
+          background: rgba(0, 0, 0, 0.12);
+          border-radius: 2px;
+        }
+        .s10-log-entry {
+          padding: 3px 12px;
+          font-size: var(--body-size);
+          font-family: var(--font-body);
+          color: #6b7280;
+          display: flex;
+          gap: 8px;
+          align-items: baseline;
+          line-height: 1.5;
+        }
+        .s10-log-entry:hover {
+          background: #f9fafb;
+        }
+        .s10-log-entry .s10-time {
+          color: #9ca3af;
+          min-width: 52px;
+        }
+        .s10-log-entry .s10-dir {
+          min-width: 16px;
+          text-align: center;
+          font-size: var(--small-size);
+        }
+        .s10-log-entry.s10-ping-log .s10-dir {
+          color: #4361ee;
+        }
+        .s10-log-entry.s10-pong-log .s10-dir {
+          color: #22c55e;
+        }
+        .s10-log-entry.s10-info-log .s10-dir {
+          color: #f59e0b;
+        }
+      </style>
+      <div
+        class="slide-content"
+        style="gap: clamp(0.5rem, 1.5vh, 1rem); align-items: center"
+      >
+        <h2 class="slide-h2 reveal">Keeping the Connection Alive</h2>
+        <p
+          class="slide-body reveal"
+          style="text-align: center; font-size: var(--h3-size)"
+        >
+          Heartbeat: the server sends a Ping, the client replies with a Pong.
+        </p>
+
+        <!-- Wire visualization: Client (left) ←→ Server (right) -->
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            width: 100%;
+            flex: 1;
+            min-height: 0;
+          "
+        >
+          <div class="s10-endpoint">
+            <div class="s10-endpoint-box" id="s10-client-box">
+              <div class="s10-endpoint-icon s10-icon-client">C</div>
+              <div class="s10-endpoint-label">Client</div>
+              <div class="s10-endpoint-status">
+                <span class="s10-dot ok" id="s10-client-dot"></span>
+                <span id="s10-client-status">Connected</span>
+              </div>
+            </div>
+          </div>
+          <div style="flex: 1; min-width: 0">
+            <div id="s10-wire-area">
+              <div id="s10-wire"></div>
+              <div class="s10-wire-dot left"></div>
+              <div class="s10-wire-dot right"></div>
+            </div>
+          </div>
+          <div class="s10-endpoint">
+            <div class="s10-endpoint-box" id="s10-server-box">
+              <div class="s10-endpoint-icon s10-icon-server">S</div>
+              <div class="s10-endpoint-label">Server</div>
+              <div class="s10-endpoint-status">
+                <span class="s10-dot ok" id="s10-server-dot"></span>
+                <span id="s10-server-status">Listening</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats + Control row -->
+        <!-- Control button -->
+        <div style="display: flex; justify-content: center">
+          <button
+            id="s10-toggle"
+            onclick="s10Toggle()"
+            style="
+              padding: 0.6rem 1.5rem;
+              background: #e3e7fc;
+              color: #4361ee;
+              border: none;
+              border-radius: 8px;
+              font-family: var(--font-body);
+              font-size: var(--body-size);
+              font-weight: 600;
+              cursor: pointer;
+            "
+          >
+            Pause
+          </button>
+        </div>
+
+        <!-- Stats -->
+        <div class="s10-stats">
+          <div class="s10-stat">
+            <div class="s10-stat-label">Pings</div>
+            <div class="s10-stat-value" id="s10-pings">0</div>
+          </div>
+          <div class="s10-stat">
+            <div class="s10-stat-label">Pongs</div>
+            <div class="s10-stat-value" id="s10-pongs">0</div>
+          </div>
+          <div class="s10-stat">
+            <div class="s10-stat-label">Latency</div>
+            <div class="s10-stat-value" id="s10-lat">—</div>
+          </div>
+        </div>
+
+        <!-- Event log (pushed to bottom) -->
+        <div class="s10-log">
+          <div class="s10-log-header">
+            <span>Event log</span>
+            <button
+              onclick="s10ClearLog()"
+              style="
+                font-size: var(--small-size);
+                padding: 2px 8px;
+                border: 1px solid #d1d5db;
+                border-radius: 4px;
+                background: #fff;
+                cursor: pointer;
+              "
+            >
+              Clear
+            </button>
+          </div>
+          <div class="s10-log-list" id="s10-log-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =============================================
+     SLIDE 11 — DISCONNECTION & RECONNECTION
+     ============================================= -->
+    <section class="slide slide--light" id="slide-11">
+      <div
+        class="slide-content"
+        style="gap: var(--content-gap); align-items: center"
+      >
+        <h2 class="slide-h2 reveal">When the Connection Drops</h2>
+        <p
+          class="slide-body reveal"
+          style="text-align: center; font-size: var(--h3-size)"
+        >
+          There are two kinds of disconnection:
+        </p>
+
+        <div
+          style="
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            width: 100%;
+            gap: clamp(0.5rem, 1vh, 0.8rem);
+          "
+        >
+          <!-- Normal Close label -->
+          <div
+            class="reveal"
+            style="
+              display: flex;
+              align-items: baseline;
+              gap: 0.5rem;
+              transition-delay: 0.15s;
+            "
+          >
+            <strong style="color: #22c55e; font-size: var(--h3-size)"
+              >Normal Close</strong
+            >
+            <span style="font-size: var(--h3-size); font-weight: 700"
+              >— User leaves the page, logs out, or server shuts down for
+              maintenance</span
+            >
+          </div>
+          <!-- Normal Close bar -->
+          <div
+            class="reveal"
+            style="
+              display: flex;
+              width: 100%;
+              height: clamp(6rem, 15vh, 10rem);
+              border-radius: 8px;
+              overflow: hidden;
+              transition-delay: 0.2s;
+            "
+          >
+            <div
+              style="
+                flex: 0 0 auto;
+                min-width: clamp(120px, 12vw, 200px);
+                background: rgba(34, 197, 94, 0.2);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                border-right: 2px solid #fff;
+                gap: 0.2rem;
+              "
+            >
+              <strong style="color: #22c55e; font-size: var(--h2-size)"
+                >1000</strong
+              >
+              <span
+                style="
+                  color: var(--text-muted-dark);
+                  font-size: var(--small-size);
+                "
+                >Normal Closure</span
+              >
+            </div>
+            <div
+              style="
+                flex: 1;
+                background: rgba(34, 197, 94, 0.1);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              "
+            >
+              <span
+                style="
+                  color: #22c55e;
+                  font-size: var(--body-size);
+                  font-weight: 600;
+                "
+                >Close frame sent — both sides agree to end</span
+              >
+            </div>
+          </div>
+
+          <!-- Unexpected Close label -->
+          <div
+            class="reveal"
+            style="
+              display: flex;
+              align-items: baseline;
+              gap: 0.5rem;
+              margin-top: clamp(0.3rem, 0.5vh, 0.5rem);
+              transition-delay: 0.25s;
+            "
+          >
+            <strong style="color: #ef4444; font-size: var(--h3-size)"
+              >Unexpected Close</strong
+            >
+            <span style="font-size: var(--h3-size); font-weight: 700"
+              >— Network fails, server crashes, or timeout</span
+            >
+          </div>
+          <!-- Unexpected Close bar -->
+          <div
+            class="reveal"
+            style="
+              display: flex;
+              width: 100%;
+              height: clamp(6rem, 15vh, 10rem);
+              border-radius: 8px;
+              overflow: hidden;
+              transition-delay: 0.3s;
+            "
+          >
+            <div
+              style="
+                flex: 0 0 auto;
+                min-width: clamp(120px, 12vw, 200px);
+                background: rgba(239, 68, 68, 0.15);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                border-right: 2px solid #fff;
+                gap: 0.2rem;
+              "
+            >
+              <strong style="color: #ef4444; font-size: var(--h2-size)"
+                >1006</strong
+              >
+              <span
+                style="
+                  color: var(--text-muted-dark);
+                  font-size: var(--small-size);
+                "
+                >Abnormal Closure</span
+              >
+            </div>
+            <div
+              style="
+                flex: 1;
+                background: rgba(239, 68, 68, 0.1);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-right: 2px solid #fff;
+              "
+            >
+              <strong style="color: #ef4444; font-size: var(--h2-size)"
+                >1s</strong
+              >
+            </div>
+            <div
+              style="
+                flex: 2;
+                background: rgba(239, 68, 68, 0.17);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-right: 2px solid #fff;
+              "
+            >
+              <strong style="color: #ef4444; font-size: var(--h2-size)"
+                >2s</strong
+              >
+            </div>
+            <div
+              style="
+                flex: 3;
+                background: rgba(239, 68, 68, 0.24);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-right: 2px solid #fff;
+              "
+            >
+              <strong style="color: #ef4444; font-size: var(--h2-size)"
+                >4s</strong
+              >
+            </div>
+            <div
+              style="
+                flex: 4;
+                background: rgba(239, 68, 68, 0.32);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              "
+            >
+              <strong style="color: #ef4444; font-size: var(--h2-size)"
+                >8s</strong
+              >
+            </div>
+          </div>
+
+          <p
+            class="reveal"
+            style="
+              text-align: center;
+              font-size: var(--h3-size);
+              transition-delay: 0.4s;
+            "
+          >
+            Each retry waits longer to avoid overwhelming the server
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- =============================================
+     SLIDE 12 — DEMO: LIFECYCLE VISUALIZATION
+     ============================================= -->
+    <section
+      class="slide slide--dark demo-slide"
+      id="slide-12"
+      data-demo="lifecycle"
+    >
+      <div class="slide-content" style="align-items: center">
+        <h2 class="slide-h3 reveal" style="text-align: center">
+          Demo: Lifecycle Visualization
+        </h2>
+        <div
+          class="status-indicator reveal"
+          style="
+            transition-delay: 0.1s;
+            justify-content: center;
+            font-size: var(--h3-size);
+          "
+        >
+          <div
+            class="status-dot status-dot--green"
+            id="demo12-dot"
+            style="width: 14px; height: 14px"
+          ></div>
+          <span id="demo12-status">Connected</span>
+        </div>
+        <div
+          class="event-log reveal"
+          id="demo12-log"
+          style="
+            transition-delay: 0.2s;
+            font-size: clamp(1rem, 2vw, 1.4rem);
+            max-width: min(90vw, 800px);
+            width: 100%;
+            align-items: flex-start;
+            overflow: hidden;
+          "
+        ></div>
+        <div
+          class="reveal"
+          style="display: flex; gap: 1rem; transition-delay: 0.3s"
+        >
+          <button
+            class="demo-btn"
+            id="demo12-normal"
+            style="
+              font-size: var(--body-size);
+              padding: 0.6rem 2rem;
+              background: #22c55e;
+            "
+          >
+            Normal Close
+          </button>
+          <button
+            class="demo-btn demo-btn--danger"
+            id="demo12-kill"
+            style="font-size: var(--body-size); padding: 0.6rem 2rem"
+          >
+            Unexpected Close
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- =============================================
+     SLIDE 13 — MESSAGE PATTERNS
+     ============================================= -->
+    <section class="slide slide--light" id="slide-13">
+      <div
+        class="slide-content"
+        style="
+          gap: var(--content-gap);
+          justify-content: center;
+          align-items: center;
+        "
+      >
+        <h2 class="slide-h2 reveal">Message Patterns</h2>
+        <div
+          class="cols reveal"
+          style="
+            transition-delay: 0.2s;
+            gap: clamp(1.5rem, 4vw, 4rem);
+            align-items: stretch;
+            width: 100%;
+          "
+        >
+          <!-- Broadcast -->
+          <div
+            style="text-align: center; display: flex; flex-direction: column"
+          >
+            <h3
+              class="slide-h3"
+              style="margin-bottom: clamp(0.5rem, 1vh, 1rem)"
+            >
+              Broadcast
+            </h3>
+            <div
+              style="
+                border-left: 3px solid var(--accent);
+                padding: clamp(0.6rem, 1.2vw, 1rem) clamp(0.8rem, 1.5vw, 1.2rem);
+                border-radius: 4px;
+                flex: 1;
+              "
+            >
+              <div
+                style="
+                  font-size: var(--body-size);
+                  font-weight: 700;
+                  color: var(--accent);
+                  text-align: left;
+                  margin-bottom: clamp(0.4rem, 0.8vh, 0.6rem);
+                "
+              >
+                Server &rarr; Everyone
+              </div>
+              <div class="user-grid" id="pattern-broadcast">
+                <div class="user-icon user-icon--lit">
+                  <div class="avatar">L</div>
+                  <div class="name">Lily</div>
+                </div>
+                <div class="user-icon user-icon--lit">
+                  <div class="avatar">J</div>
+                  <div class="name">Jake</div>
+                </div>
+                <div class="user-icon user-icon--lit">
+                  <div class="avatar">N</div>
+                  <div class="name">Nina</div>
+                </div>
+                <div class="user-icon user-icon--lit">
+                  <div class="avatar">O</div>
+                  <div class="name">Owen</div>
+                </div>
+              </div>
+            </div>
+            <p
+              class="slide-body text-muted-dark"
+              style="font-size: var(--h3-size); margin-top: 0.6em"
+            >
+              All connected clients receive it
+            </p>
+          </div>
+          <!-- Room -->
+          <div
+            style="text-align: center; display: flex; flex-direction: column"
+          >
+            <h3
+              class="slide-h3"
+              style="margin-bottom: clamp(0.5rem, 1vh, 1rem)"
+            >
+              Room
+            </h3>
+            <div
+              style="
+                display: flex;
+                flex-direction: column;
+                gap: clamp(0.5rem, 1vh, 0.8rem);
+                flex: 1;
+              "
+            >
+              <div
+                style="
+                  border-left: 3px solid var(--accent);
+                  padding: clamp(0.6rem, 1.2vw, 1rem)
+                    clamp(0.8rem, 1.5vw, 1.2rem);
+                  border-radius: 4px;
+                  flex: 1;
+                "
+              >
+                <div
+                  style="
+                    font-size: var(--body-size);
+                    font-weight: 700;
+                    color: var(--accent);
+                    text-align: left;
+                    margin-bottom: clamp(0.4rem, 0.8vh, 0.6rem);
+                  "
+                >
+                  Room A
+                </div>
+                <div class="user-grid">
+                  <div class="user-icon user-icon--lit">
+                    <div class="avatar">L</div>
+                    <div class="name">Lily</div>
+                  </div>
+                  <div class="user-icon user-icon--lit">
+                    <div class="avatar">J</div>
+                    <div class="name">Jake</div>
+                  </div>
+                </div>
+              </div>
+              <div
+                style="
+                  border-left: 3px solid var(--amber);
+                  padding: clamp(0.6rem, 1.2vw, 1rem)
+                    clamp(0.8rem, 1.5vw, 1.2rem);
+                  border-radius: 4px;
+                  opacity: 0.35;
+                  flex: 1;
+                "
+              >
+                <div
+                  style="
+                    font-size: var(--body-size);
+                    font-weight: 700;
+                    color: var(--amber);
+                    text-align: left;
+                    margin-bottom: clamp(0.4rem, 0.8vh, 0.6rem);
+                  "
+                >
+                  Room B
+                </div>
+                <div class="user-grid">
+                  <div class="user-icon user-icon--dim" style="opacity: 1">
+                    <div class="avatar">N</div>
+                    <div class="name">Nina</div>
+                  </div>
+                  <div class="user-icon user-icon--dim" style="opacity: 1">
+                    <div class="avatar">O</div>
+                    <div class="name">Owen</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <p
+              class="slide-body text-muted-dark"
+              style="font-size: var(--h3-size); margin-top: 0.6em"
+            >
+              Only same-room members receive it
+            </p>
+          </div>
+          <!-- One-to-One -->
+          <div
+            style="text-align: center; display: flex; flex-direction: column"
+          >
+            <h3
+              class="slide-h3"
+              style="margin-bottom: clamp(0.5rem, 1vh, 1rem)"
+            >
+              One-to-One
+            </h3>
+            <div
+              style="
+                border-left: 3px solid var(--accent);
+                padding: clamp(0.6rem, 1.2vw, 1rem) clamp(0.8rem, 1.5vw, 1.2rem);
+                border-radius: 4px;
+                flex: 1;
+              "
+            >
+              <div
+                style="
+                  font-size: var(--body-size);
+                  font-weight: 700;
+                  color: var(--accent);
+                  text-align: left;
+                  margin-bottom: clamp(0.4rem, 0.8vh, 0.6rem);
+                "
+              >
+                &rarr; Lily
+              </div>
+              <div class="user-grid" id="pattern-direct">
+                <div class="user-icon user-icon--lit">
+                  <div class="avatar">L</div>
+                  <div class="name">Lily</div>
+                </div>
+                <div class="user-icon user-icon--dim">
+                  <div class="avatar">J</div>
+                  <div class="name">Jake</div>
+                </div>
+                <div class="user-icon user-icon--dim">
+                  <div class="avatar">N</div>
+                  <div class="name">Nina</div>
+                </div>
+                <div class="user-icon user-icon--dim">
+                  <div class="avatar">O</div>
+                  <div class="name">Owen</div>
+                </div>
+              </div>
+            </div>
+            <p
+              class="slide-body text-muted-dark"
+              style="font-size: var(--h3-size); margin-top: 0.6em"
+            >
+              Exactly one client receives it
+            </p>
+          </div>
+        </div>
+        <p
+          class="slide-body reveal"
+          style="
+            text-align: center;
+            font-size: var(--h3-size);
+            font-weight: 700;
+            transition-delay: 0.35s;
+          "
+        >
+          The first question when designing a real-time feature:<br />
+          <span style="color: var(--accent); font-size: var(--h3-size)"
+            >who should receive this message?</span
+          >
+        </p>
+      </div>
+    </section>
+
+    <!-- =============================================
+     SLIDE 14 — DEMO: LIVE CHAT
+     ============================================= -->
+    <section
+      class="slide slide--dark demo-slide"
+      id="slide-14"
+      data-demo="chat"
+    >
+      <div class="slide-content">
+        <div
+          class="reveal"
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+          "
+        >
+          <h2 class="slide-h3">Live Demo: Chat & Message Patterns</h2>
+          <div class="demo-controls">
+            <select class="demo-select" id="demo18-mode">
+              <option value="broadcast">Broadcast</option>
+              <option value="roomA">Room A</option>
+              <option value="roomB">Room B</option>
+              <option value="direct">Direct</option>
+            </select>
+            <select
+              class="demo-select"
+              id="demo18-target"
+              style="display: none"
+            ></select>
+            <input
+              type="text"
+              class="demo-input"
+              id="demo18-input"
+              placeholder="Type a message..."
+              style="max-width: 200px"
+            />
+            <button class="demo-btn" id="demo18-send">Send</button>
+          </div>
+        </div>
+        <div class="demo-body reveal" style="transition-delay: 0.15s">
+          <!-- Left column: QR & URL -->
+          <div class="url-display" style="flex: 0.6">
+            <p class="slide-small text-muted-light">Scan or visit to join</p>
+            <div
+              id="chat-qr"
+              style="
+                background: #fff;
+                padding: 8px;
+                border-radius: 8px;
+                display: inline-block;
+              "
+            ></div>
+            <div class="url-box" id="chat-url">localhost:3000/chat</div>
+            <p
+              class="slide-body text-muted-light"
+              style="font-size: var(--small-size); text-align: center"
+            >
+              Connect to the same Wi-Fi network
+            </p>
+            <div class="status-indicator" style="font-size: var(--small-size)">
+              <div class="status-dot status-dot--amber" id="demo18-dot"></div>
+              <span id="demo18-conn-status">Waiting for server...</span>
+            </div>
+          </div>
+          <!-- Center column: Chat messages -->
+          <div class="chat-panel" style="flex: 1">
+            <div class="chat-messages" id="demo18-messages"></div>
+          </div>
+          <!-- Right column: Connected users -->
+          <div
+            style="
+              flex: 0.6;
+              display: flex;
+              flex-direction: column;
+              gap: clamp(0.4rem, 1vh, 0.8rem);
+            "
+          >
+            <div
+              class="slide-small text-muted-light"
+              style="text-align: center; font-weight: 700"
+            >
+              Connected Users
+            </div>
+            <div
+              id="demo18-users"
+              style="
+                display: flex;
+                flex-direction: column;
+                gap: clamp(0.4rem, 0.8vh, 0.6rem);
+                flex: 1;
+                min-height: 0;
+                overflow-y: auto;
+              "
+            ></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =============================================
+     SLIDE 15 — THE COST OF WEBSOCKET
+     ============================================= -->
+    <section class="slide slide--light" id="slide-15">
+      <div class="slide-content" style="gap: var(--content-gap)">
+        <h2 class="slide-h2 reveal">The Cost of WebSocket</h2>
+        <div
+          class="reveal"
+          style="
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: clamp(0.8rem, 1.5vw, 1.2rem);
+            flex: 1;
+            transition-delay: 0.2s;
+          "
+        >
+          <div
+            class="compare-block compare-block--dark"
+            style="
+              flex: 1;
+              display: flex;
+              flex-direction: column;
+              justify-content: flex-start;
+            "
+          >
+            <div
+              style="
+                font-size: var(--h2-size);
+                font-weight: 800;
+                color: var(--amber);
+                line-height: 1;
+              "
+            >
+              01
+            </div>
+            <h3 class="slide-h3" style="color: var(--amber)">
+              Server Resources
+            </h3>
+            <p
+              class="slide-body text-muted-dark"
+              style="font-size: var(--h3-size)"
+            >
+              1 user = 1 persistent connection.<br />
+              10K users = 10K open sockets.<br />
+              HTTP serves and moves on — WebSocket doesn't.
+            </p>
+          </div>
+          <div
+            class="compare-block compare-block--dark"
+            style="
+              flex: 1;
+              display: flex;
+              flex-direction: column;
+              justify-content: flex-start;
+            "
+          >
+            <div
+              style="
+                font-size: var(--h2-size);
+                font-weight: 800;
+                color: var(--amber);
+                line-height: 1;
+              "
+            >
+              02
+            </div>
+            <h3 class="slide-h3" style="color: var(--amber)">
+              Scaling is Harder
+            </h3>
+            <p
+              class="slide-body text-muted-dark"
+              style="font-size: var(--h3-size)"
+            >
+              Stateful — client is tied to one server.<br />
+              Adding more servers doesn't automatically help.
+            </p>
+          </div>
+          <div
+            class="compare-block compare-block--dark"
+            style="
+              flex: 1;
+              display: flex;
+              flex-direction: column;
+              justify-content: flex-start;
+            "
+          >
+            <div
+              style="
+                font-size: var(--h2-size);
+                font-weight: 800;
+                color: var(--amber);
+                line-height: 1;
+              "
+            >
+              03
+            </div>
+            <h3 class="slide-h3" style="color: var(--amber)">
+              More Things Can Go Wrong
+            </h3>
+            <p
+              class="slide-body text-muted-dark"
+              style="font-size: var(--h3-size)"
+            >
+              Network drops, proxy timeouts, mobile sleep.<br />
+              <strong>You must handle all of them.</strong>
+            </p>
+          </div>
+          <div
+            class="compare-block compare-block--dark"
+            style="
+              flex: 1;
+              display: flex;
+              flex-direction: column;
+              justify-content: flex-start;
+            "
+          >
+            <div
+              style="
+                font-size: var(--h2-size);
+                font-weight: 800;
+                color: var(--amber);
+                line-height: 1;
+              "
+            >
+              04
+            </div>
+            <h3 class="slide-h3" style="color: var(--amber)">
+              Infrastructure Cost
+            </h3>
+            <p
+              class="slide-body text-muted-dark"
+              style="font-size: var(--h3-size)"
+            >
+              Load balancers, firewalls, proxies — all need
+              <strong>long-lived connection support.</strong>
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =============================================
+     SLIDE 16 — CHOOSING THE RIGHT PROTOCOL
+     ============================================= -->
+    <section class="slide slide--light" id="slide-16">
+      <div
+        class="slide-content"
+        style="gap: var(--content-gap); justify-content: center"
+      >
+        <h2 class="slide-h2 reveal">Choosing the Right Protocol</h2>
+        <div
+          class="reveal"
+          style="
+            display: grid;
+            grid-template-columns: auto 1fr 1fr 1fr;
+            gap: 0;
+            width: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+            transition-delay: 0.2s;
+          "
+        >
+          <!-- Column Headers -->
+          <div
+            style="
+              padding: clamp(0.6rem, 1.2vw, 1rem);
+              background: rgba(0, 0, 0, 0.03);
+            "
+          ></div>
+          <div
+            style="
+              padding: clamp(0.6rem, 1.2vw, 1rem);
+              background: rgba(0, 0, 0, 0.03);
+              border-top: 4px solid var(--amber);
+              text-align: center;
+            "
+          >
+            <strong class="slide-h3" style="color: var(--amber)">HTTP</strong>
+          </div>
+          <div
+            style="
+              padding: clamp(0.6rem, 1.2vw, 1rem);
+              background: rgba(0, 0, 0, 0.03);
+              border-top: 4px solid var(--green);
+              text-align: center;
+            "
+          >
+            <strong class="slide-h3" style="color: var(--green)">SSE</strong>
+          </div>
+          <div
+            style="
+              padding: clamp(0.6rem, 1.2vw, 1rem);
+              background: rgba(0, 0, 0, 0.03);
+              border-top: 4px solid var(--accent);
+              text-align: center;
+            "
+          >
+            <strong class="slide-h3" style="color: var(--accent)"
+              >WebSocket</strong
+            >
+          </div>
+          <!-- Row: Direction -->
+          <div
+            style="
+              padding: clamp(0.6rem, 1.2vw, 1rem);
+              border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+              font-size: var(--body-size);
+              font-weight: 700;
+              color: var(--text-muted-dark);
+              display: flex;
+              align-items: center;
+            "
+          >
+            Direction
+          </div>
+          <div
+            style="
+              padding: clamp(0.6rem, 1.2vw, 1rem);
+              border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+              font-size: var(--body-size);
+              display: flex;
+              align-items: center;
+            "
+          >
+            Request ↔ Response
+          </div>
+          <div
+            style="
+              padding: clamp(0.6rem, 1.2vw, 1rem);
+              border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+              font-size: var(--body-size);
+              display: flex;
+              align-items: center;
+            "
+          >
+            Server → Client only
+          </div>
+          <div
+            style="
+              padding: clamp(0.6rem, 1.2vw, 1rem);
+              border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+              font-size: var(--body-size);
+              display: flex;
+              align-items: center;
+            "
+          >
+            <strong>Bidirectional</strong>
+          </div>
+          <!-- Row: Connection -->
+          <div
+            style="
+              padding: clamp(0.6rem, 1.2vw, 1rem);
+              border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+              font-size: var(--body-size);
+              font-weight: 700;
+              color: var(--text-muted-dark);
+              display: flex;
+              align-items: center;
+            "
+          >
+            Connection
+          </div>
+          <div
+            style="
+              padding: clamp(0.6rem, 1.2vw, 1rem);
+              border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+              font-size: var(--body-size);
+              display: flex;
+              align-items: center;
+            "
+          >
+            New connection per request
+          </div>
+          <div
+            style="
+              padding: clamp(0.6rem, 1.2vw, 1rem);
+              border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+              font-size: var(--body-size);
+              display: flex;
+              align-items: center;
+            "
+          >
+            Persistent HTTP stream
+          </div>
+          <div
+            style="
+              padding: clamp(0.6rem, 1.2vw, 1rem);
+              border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+              font-size: var(--body-size);
+              display: flex;
+              align-items: center;
+            "
+          >
+            Persistent, protocol upgrade
+          </div>
+          <!-- Row: Best for -->
+          <div
+            style="
+              padding: clamp(0.6rem, 1.2vw, 1rem);
+              border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+              font-size: var(--body-size);
+              font-weight: 700;
+              color: var(--text-muted-dark);
+              display: flex;
+              align-items: center;
+            "
+          >
+            Best for
+          </div>
+          <div
+            style="
+              padding: clamp(0.6rem, 1.2vw, 1rem);
+              border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+              font-size: var(--body-size);
+              display: flex;
+              align-items: center;
+            "
+          >
+            REST APIs, forms, static resources, caching
+          </div>
+          <div
+            style="
+              padding: clamp(0.6rem, 1.2vw, 1rem);
+              border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+              font-size: var(--body-size);
+              display: flex;
+              align-items: center;
+            "
+          >
+            Live feeds, notifications, dashboards, AI token streaming
+          </div>
+          <div
+            style="
+              padding: clamp(0.6rem, 1.2vw, 1rem);
+              border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+              font-size: var(--body-size);
+              display: flex;
+              align-items: center;
+            "
+          >
+            Chat, collaborative editing, multiplayer games, trading
+          </div>
+          <!-- Row: Complexity -->
+          <div
+            style="
+              padding: clamp(0.6rem, 1.2vw, 1rem);
+              border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+              font-size: var(--body-size);
+              font-weight: 700;
+              color: var(--text-muted-dark);
+              display: flex;
+              align-items: center;
+            "
+          >
+            Complexity
+          </div>
+          <div
+            style="
+              padding: clamp(0.6rem, 1.2vw, 1rem);
+              border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+              font-size: var(--body-size);
+              display: flex;
+              align-items: center;
+            "
+          >
+            <strong style="color: var(--green)">Low</strong>
+          </div>
+          <div
+            style="
+              padding: clamp(0.6rem, 1.2vw, 1rem);
+              border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+              font-size: var(--body-size);
+              display: flex;
+              align-items: center;
+            "
+          >
+            <strong style="color: var(--green)">Low</strong>&nbsp;—
+            auto-reconnect built in
+          </div>
+          <div
+            style="
+              padding: clamp(0.6rem, 1.2vw, 1rem);
+              border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+              font-size: var(--body-size);
+              display: flex;
+              align-items: center;
+            "
+          >
+            <strong style="color: var(--amber)">Higher</strong>&nbsp;— manage
+            lifecycle yourself
+          </div>
+          <!-- Row: Binary data -->
+          <div
+            style="
+              padding: clamp(0.6rem, 1.2vw, 1rem);
+              font-size: var(--body-size);
+              font-weight: 700;
+              color: var(--text-muted-dark);
+              display: flex;
+              align-items: center;
+            "
+          >
+            Binary data
+          </div>
+          <div
+            style="
+              padding: clamp(0.6rem, 1.2vw, 1rem);
+              font-size: var(--body-size);
+              display: flex;
+              align-items: center;
+            "
+          >
+            <strong style="color: var(--green)">✓</strong>
+          </div>
+          <div
+            style="
+              padding: clamp(0.6rem, 1.2vw, 1rem);
+              font-size: var(--body-size);
+              display: flex;
+              align-items: center;
+            "
+          >
+            <strong style="color: var(--red)">✗</strong>&nbsp;text only
+          </div>
+          <div
+            style="
+              padding: clamp(0.6rem, 1.2vw, 1rem);
+              font-size: var(--body-size);
+              display: flex;
+              align-items: center;
+            "
+          >
+            <strong style="color: var(--green)">✓</strong>
+          </div>
+        </div>
+        <p
+          class="slide-body reveal"
+          style="
+            text-align: center;
+            font-size: var(--body-size);
+            font-weight: 700;
+            transition-delay: 0.35s;
+            max-width: 65ch;
+            margin: 0 auto;
+          "
+        >
+          Need the server to push data? &rarr; If one-way is enough, use
+          <strong style="color: var(--green)">SSE</strong>. If both sides talk,
+          use <strong style="color: var(--accent)">WebSocket</strong>. If
+          neither —
+          <strong style="color: var(--amber)">HTTP is all you need</strong>.
+        </p>
+      </div>
+    </section>
+
+    <!-- =============================================
+     SLIDE 17 — SUMMARY
+     ============================================= -->
+    <section class="slide slide--light" id="slide-17">
+      <div class="slide-content" style="gap: var(--content-gap)">
+        <h2 class="slide-h2 reveal">What We Learned Today</h2>
+
+        <div
+          class="reveal"
+          style="
+            display: flex;
+            flex-direction: column;
+            gap: clamp(0.6rem, 1.5vh, 1.2rem);
+            width: 100%;
+            transition-delay: 0.2s;
+          "
+        >
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: clamp(1rem, 2vw, 2rem);
+              padding: clamp(0.8rem, 2vh, 1.5rem) clamp(1rem, 2vw, 2rem);
+              background: rgba(67, 97, 238, 0.06);
+              border-radius: 8px;
+            "
+          >
+            <span
+              style="
+                font-size: var(--h2-size);
+                font-weight: 800;
+                color: var(--accent);
+                min-width: 2ch;
+              "
+              >1</span
+            >
+            <span style="font-size: var(--h3-size); font-weight: 600"
+              ><strong class="text-accent">HTTP</strong> is request-response. It
+              wasn't designed for real-time.</span
+            >
+          </div>
+
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: clamp(1rem, 2vw, 2rem);
+              padding: clamp(0.8rem, 2vh, 1.5rem) clamp(1rem, 2vw, 2rem);
+              background: rgba(67, 97, 238, 0.06);
+              border-radius: 8px;
+            "
+          >
+            <span
+              style="
+                font-size: var(--h2-size);
+                font-weight: 800;
+                color: var(--accent);
+                min-width: 2ch;
+              "
+              >2</span
+            >
+            <span style="font-size: var(--h3-size); font-weight: 600"
+              ><strong class="text-accent">WebSocket</strong> gives us a
+              persistent, two-way connection with very low overhead.</span
+            >
+          </div>
+
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: clamp(1rem, 2vw, 2rem);
+              padding: clamp(0.8rem, 2vh, 1.5rem) clamp(1rem, 2vw, 2rem);
+              background: rgba(67, 97, 238, 0.06);
+              border-radius: 8px;
+            "
+          >
+            <span
+              style="
+                font-size: var(--h2-size);
+                font-weight: 800;
+                color: var(--accent);
+                min-width: 2ch;
+              "
+              >3</span
+            >
+            <span style="font-size: var(--h3-size); font-weight: 600"
+              >A connection has a
+              <strong class="text-accent">lifecycle</strong> &mdash; open it,
+              keep it alive, handle disconnections gracefully.</span
+            >
+          </div>
+
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: clamp(1rem, 2vw, 2rem);
+              padding: clamp(0.8rem, 2vh, 1.5rem) clamp(1rem, 2vw, 2rem);
+              background: rgba(67, 97, 238, 0.06);
+              border-radius: 8px;
+            "
+          >
+            <span
+              style="
+                font-size: var(--h2-size);
+                font-weight: 800;
+                color: var(--accent);
+                min-width: 2ch;
+              "
+              >4</span
+            >
+            <span style="font-size: var(--h3-size); font-weight: 600"
+              >Choose the right
+              <strong class="text-accent">message pattern</strong> &mdash;
+              broadcast, room, or one-to-one.</span
+            >
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =============================================
+     SLIDE 18 — Q&A
+     ============================================= -->
+    <section class="slide slide--light" id="slide-18">
+      <div
+        class="slide-content"
+        style="
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          gap: var(--content-gap);
+        "
+      >
+        <div
+          class="slide-title reveal"
+          style="font-size: clamp(3rem, 10vw, 8rem); color: var(--accent)"
+        >
+          Q&A
+        </div>
+        <p class="slide-body text-muted-dark reveal">Questions?</p>
+      </div>
+    </section>
+
+    <!-- ===========================================
+     JAVASCRIPT
+     =========================================== -->
+    <script>
+      /* ===========================================
+   SLIDE PRESENTATION CONTROLLER
+   =========================================== */
+      class SlidePresentation {
+        constructor() {
+          this.slides = document.querySelectorAll('.slide');
+          this.currentSlide = 0;
+          this.isScrolling = false;
+          this.setupIntersectionObserver();
+          this.setupKeyboardNav();
+          this.setupTouchNav();
+          this.setupProgressBar();
+          this.setupNavDots();
+        }
+
+        setupIntersectionObserver() {
+          const observer = new IntersectionObserver(
+            (entries) => {
+              entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                  entry.target.classList.add('visible');
+                  const idx = Array.from(this.slides).indexOf(entry.target);
+                  if (idx !== -1) {
+                    this.currentSlide = idx;
+                    this.updateProgressBar();
+                    this.updateNavDots();
+                    this.onSlideEnter(idx);
+                  }
+                } else {
+                  this.onSlideLeave(
+                    Array.from(this.slides).indexOf(entry.target),
+                  );
+                }
+              });
+            },
+            { threshold: 0.6 },
+          );
+
+          this.slides.forEach((s) => observer.observe(s));
+        }
+
+        setupKeyboardNav() {
+          document.addEventListener('keydown', (e) => {
+            if (e.target.getAttribute('contenteditable') === 'true') return;
+            if (
+              e.target.tagName === 'INPUT' ||
+              e.target.tagName === 'SELECT' ||
+              e.target.tagName === 'TEXTAREA'
+            )
+              return;
+            switch (e.key) {
+              case 'ArrowDown':
+              case 'ArrowRight':
+              case ' ':
+              case 'PageDown':
+                e.preventDefault();
+                this.goTo(this.currentSlide + 1);
+                break;
+              case 'ArrowUp':
+              case 'ArrowLeft':
+              case 'PageUp':
+                e.preventDefault();
+                this.goTo(this.currentSlide - 1);
+                break;
+              case 'Home':
+                e.preventDefault();
+                this.goTo(0);
+                break;
+              case 'End':
+                e.preventDefault();
+                this.goTo(this.slides.length - 1);
+                break;
+            }
+          });
+        }
+
+        setupTouchNav() {
+          let startY = 0;
+          document.addEventListener(
+            'touchstart',
+            (e) => {
+              startY = e.touches[0].clientY;
+            },
+            { passive: true },
+          );
+          document.addEventListener(
+            'touchend',
+            (e) => {
+              const diff = startY - e.changedTouches[0].clientY;
+              if (Math.abs(diff) > 50) {
+                diff > 0
+                  ? this.goTo(this.currentSlide + 1)
+                  : this.goTo(this.currentSlide - 1);
+              }
+            },
+            { passive: true },
+          );
+        }
+
+        setupProgressBar() {
+          this.progressBar = document.getElementById('progressBar');
+          this.updateProgressBar();
+        }
+
+        updateProgressBar() {
+          const pct = ((this.currentSlide + 1) / this.slides.length) * 100;
+          this.progressBar.style.width = pct + '%';
+        }
+
+        setupNavDots() {
+          const nav = document.getElementById('navDots');
+          this.slides.forEach((_, i) => {
+            const dot = document.createElement('button');
+            dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+            dot.setAttribute('aria-label', `Go to slide ${i + 1}`);
+            dot.addEventListener('click', () => this.goTo(i));
+            nav.appendChild(dot);
+          });
+          this.dots = nav.querySelectorAll('.nav-dot');
+        }
+
+        updateNavDots() {
+          this.dots.forEach((d, i) =>
+            d.classList.toggle('active', i === this.currentSlide),
+          );
+        }
+
+        goTo(idx) {
+          if (idx < 0 || idx >= this.slides.length) return;
+          this.slides[idx].scrollIntoView({ behavior: 'smooth' });
+        }
+
+        onSlideEnter(idx) {
+          const demo = this.slides[idx].getAttribute('data-demo');
+          if (demo && window.demos && window.demos[demo]) {
+            window.demos[demo].start();
+          }
+        }
+
+        onSlideLeave(idx) {
+          if (idx < 0) return;
+          const demo = this.slides[idx].getAttribute('data-demo');
+          if (demo && window.demos && window.demos[demo]) {
+            window.demos[demo].stop();
+          }
+        }
+      }
+
+      /* ===========================================
+   DEMO CONTROLLER BASE
+   =========================================== */
+      class DemoController {
+        constructor() {
+          this.active = false;
+          this.timers = [];
+        }
+        start() {
+          this.active = true;
+        }
+        stop() {
+          this.active = false;
+          this.timers.forEach((id) => {
+            clearTimeout(id);
+            clearInterval(id);
+          });
+          this.timers = [];
+        }
+        addTimeout(fn, delay) {
+          const id = setTimeout(() => {
+            if (this.active) fn();
+          }, delay);
+          this.timers.push(id);
+          return id;
+        }
+        addInterval(fn, delay) {
+          const id = setInterval(() => {
+            if (this.active) fn();
+          }, delay);
+          this.timers.push(id);
+          return id;
+        }
+        now() {
+          const d = new Date();
+          return d.toLocaleTimeString('en-US', {
+            hour12: false,
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+          });
+        }
+        formatBytes(b) {
+          return b < 1024 ? b + 'B' : (b / 1024).toFixed(1) + 'KB';
+        }
+        getHeaderSize(r) {
+          let s = `HTTP/1.1 ${r.status} ${r.statusText}\r\n`.length;
+          r.headers.forEach((v, k) => {
+            s += k.length + v.length + 4;
+          });
+          s += 2;
+          return s;
+        }
+      }
+
+      /* ===========================================
+   DEMO 5: POLLING COMPARISON
+   =========================================== */
+      class PollingComparisonDemo extends DemoController {
+        constructor() {
+          super();
+          this.BASE = 'http://localhost:3000';
+          this.spReqs = 0;
+          this.spWasted = 0;
+          this.spBytes = 0;
+          this.lpReqs = 0;
+          this.lpBytes = 0;
+          this.sseReqs = 0;
+          this.sseBytes = 0;
+          this.spSince = 0;
+          this.eventSource = null;
+          this.lpAbort = null;
+
+          document
+            .getElementById('demo5-send')
+            .addEventListener('click', () => this.sendMsg());
+          document
+            .getElementById('demo5-input')
+            .addEventListener('keydown', (e) => {
+              if (e.key === 'Enter') this.sendMsg();
+            });
+          document
+            .getElementById('demo5-reset')
+            .addEventListener('click', () => this.reset());
+        }
+
+        start() {
+          super.start();
+          this.spSince = Date.now();
+          this.startShortPolling();
+          this.startLongPolling();
+          this.startSSE();
+        }
+
+        stop() {
+          super.stop();
+          if (this.eventSource) {
+            this.eventSource.close();
+            this.eventSource = null;
+          }
+          if (this.lpAbort) {
+            this.lpAbort.abort();
+            this.lpAbort = null;
+          }
+        }
+
+        reset() {
+          this.stop();
+          ['demo5-sp-net', 'demo5-lp-net', 'demo5-sse-net'].forEach((id) => {
+            document.getElementById(id).innerHTML = '';
+          });
+          this.spReqs = 0;
+          this.spWasted = 0;
+          this.spBytes = 0;
+          this.lpReqs = 0;
+          this.lpBytes = 0;
+          this.sseReqs = 0;
+          this.sseBytes = 0;
+          this.spSince = 0;
+          this.start();
+        }
+
+        /* --- Short Polling: real fetch every 1.5s --- */
+        startShortPolling() {
+          this.addInterval(() => {
+            fetch(this.BASE + '/api/poll?since=' + this.spSince)
+              .then(async (r) => {
+                const respHeaderSize = this.getHeaderSize(r);
+                const reqHeaderEst = 400;
+                const text = await r.text();
+                const bodySize = text.length;
+                const totalSize = reqHeaderEst + respHeaderSize + bodySize;
+                const data = JSON.parse(text);
+                this.spReqs++;
+                this.spBytes += totalSize;
+                const hasNew = data.messages.length > 0;
+                if (!hasNew) this.spWasted++;
+                if (hasNew) {
+                  const last = data.messages[data.messages.length - 1];
+                  this.spSince = last.time;
+                }
+                this.addNetRow(
+                  'demo5-sp-net',
+                  'GET',
+                  '/api/poll',
+                  String(r.status),
+                  this.formatBytes(totalSize),
+                  hasNew,
+                );
+                this.updateCounters();
+              })
+              .catch(() => {
+                this.addNetRow('demo5-sp-net', 'GET', '/api/poll', 'ERR', '—');
+              });
+          }, 1500);
+        }
+
+        /* --- Long Polling: real fetch, re-issues on response --- */
+        startLongPolling() {
+          this.doLongPoll();
+        }
+
+        doLongPoll() {
+          if (!this.active) return;
+          this.lpAbort = new AbortController();
+          this.addNetRow(
+            'demo5-lp-net',
+            'GET',
+            '/api/long-poll',
+            '',
+            'pending',
+          );
+          this.lpReqs++;
+          this.updateCounters();
+
+          fetch(this.BASE + '/api/long-poll', { signal: this.lpAbort.signal })
+            .then(async (r) => {
+              if (!this.active) return;
+              const respHeaderSize = this.getHeaderSize(r);
+              const reqHeaderEst = 400;
+              const text = await r.text();
+              const bodySize = text.length;
+              const totalSize = reqHeaderEst + respHeaderSize + bodySize;
+              const data = JSON.parse(text);
+              const msgs = data.messages || [];
+              const hasNew = msgs.length > 0;
+              this.lpBytes += totalSize;
+              this.addNetRow(
+                'demo5-lp-net',
+                'GET',
+                '/api/long-poll',
+                String(r.status),
+                hasNew ? this.formatBytes(totalSize) : 'timeout',
+                hasNew,
+              );
+              this.updateCounters();
+              this.doLongPoll();
+            })
+            .catch(() => {
+              if (this.active) this.addTimeout(() => this.doLongPoll(), 1000);
+            });
+        }
+
+        /* --- SSE: real EventSource --- */
+        startSSE() {
+          this.eventSource = new EventSource(this.BASE + '/api/sse');
+          this.sseReqs = 1;
+          this.sseBytes = 0;
+          this.addNetRow('demo5-sse-net', 'GET', '/api/sse', '200', 'stream');
+          this.updateCounters();
+
+          this.eventSource.addEventListener('message', (e) => {
+            if (!this.active) return;
+            try {
+              const msg = JSON.parse(e.data);
+              const size = e.data.length + 6;
+              this.sseBytes += size;
+              this.addNetRow(
+                'demo5-sse-net',
+                'EVT',
+                'message',
+                '—',
+                this.formatBytes(size),
+              );
+              this.updateCounters();
+            } catch (err) {}
+          });
+        }
+
+        sendMsg() {
+          const input = document.getElementById('demo5-input');
+          const msg = input.value.trim() || 'Hello!';
+          input.value = '';
+
+          fetch(this.BASE + '/api/message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user: 'Presenter', text: msg }),
+          }).catch(() => {});
+        }
+
+        addNetRow(id, method, url, status, size) {
+          const el = document.getElementById(id);
+          const div = document.createElement('div');
+          div.className = 'net-row';
+          div.innerHTML = `<span class="method">${method}</span><span class="url">${url}</span><span class="status">${status}</span><span class="size">${size}</span>`;
+          el.appendChild(div);
+          el.scrollTop = el.scrollHeight;
+        }
+
+        updateCounters() {}
+      }
+
+      /* ===========================================
+   DEMO 8: OVERHEAD COMPARISON
+   =========================================== */
+      class OverheadComparisonDemo extends DemoController {
+        constructor() {
+          super();
+          this.BASE = 'http://localhost:3000';
+          this.pollReqs = 0;
+          this.pollOverhead = 0;
+          this.pollPayload = 0;
+          this.wsFrames = 0;
+          this.wsOverhead = 0;
+          this.wsPayload = 0;
+          this.pollSince = 0;
+          this.socket = null;
+
+          document
+            .getElementById('demo8-send')
+            .addEventListener('click', () => this.sendMsg());
+          document
+            .getElementById('demo8-input')
+            .addEventListener('keydown', (e) => {
+              if (e.key === 'Enter') this.sendMsg();
+            });
+          document
+            .getElementById('demo8-reset')
+            .addEventListener('click', () => this.reset());
+        }
+
+        start() {
+          super.start();
+          this.pollSince = Date.now();
+          this.startPolling();
+          this.startWebSocket();
+        }
+
+        stop() {
+          super.stop();
+          if (this.socket) {
+            this.socket.disconnect();
+            this.socket = null;
+          }
+        }
+
+        reset() {
+          this.stop();
+          ['demo8-poll-net', 'demo8-ws-net'].forEach((id) => {
+            document.getElementById(id).innerHTML = '';
+          });
+          this.pollReqs = 0;
+          this.pollOverhead = 0;
+          this.pollPayload = 0;
+          this.wsFrames = 0;
+          this.wsOverhead = 0;
+          this.wsPayload = 0;
+          this.pollSince = 0;
+          this.updateCounters();
+          this.start();
+        }
+
+        /* --- Left side: real HTTP short polling --- */
+        startPolling() {
+          this.addInterval(() => {
+            fetch(this.BASE + '/api/poll?since=' + this.pollSince)
+              .then(async (r) => {
+                if (!this.active) return;
+                const respHeaderSize = this.getHeaderSize(r);
+                const reqHeaderEst = 400;
+                const text = await r.text();
+                const bodySize = text.length;
+                const overhead = reqHeaderEst + respHeaderSize;
+                const data = JSON.parse(text);
+                this.pollReqs++;
+                this.pollOverhead += overhead;
+                this.pollPayload += bodySize;
+                const hasNew = data.messages.length > 0;
+                if (hasNew) {
+                  const last = data.messages[data.messages.length - 1];
+                  this.pollSince = last.time;
+                }
+                this.addNetRow(
+                  'demo8-poll-net',
+                  'GET',
+                  '/api/poll',
+                  String(r.status),
+                  this.formatBytes(overhead + bodySize),
+                );
+                this.updateCounters();
+              })
+              .catch(() => {
+                this.addNetRow(
+                  'demo8-poll-net',
+                  'GET',
+                  '/api/poll',
+                  'ERR',
+                  '—',
+                );
+              });
+          }, 1500);
+        }
+
+        /* --- Right side: real WebSocket via Socket.IO --- */
+        startWebSocket() {
+          try {
+            this.socket = io(this.BASE, { transports: ['websocket'] });
+            this.addNetRow('demo8-ws-net', 'WS', 'Upgrade', '101', '—');
+            this.wsFrames = 1;
+            this.wsBytes = 0;
+
+            this.socket.on('connect', () => {
+              this.addNetRow('demo8-ws-net', 'WS', 'Connected', '—', '—');
+              this.updateCounters();
+            });
+
+            this.socket.on('chat message', (msg) => {
+              if (!this.active) return;
+              const payloadSize = JSON.stringify(msg).length;
+              const frameHeader = 6;
+              this.wsFrames++;
+              this.wsOverhead += frameHeader;
+              this.wsPayload += payloadSize;
+              this.addNetRow(
+                'demo8-ws-net',
+                'WS',
+                'frame: ' + msg.text,
+                '—',
+                this.formatBytes(frameHeader + payloadSize),
+              );
+              this.updateCounters();
+            });
+          } catch (e) {
+            this.addNetRow('demo8-ws-net', 'WS', 'Error', '—', '—');
+          }
+        }
+
+        /* --- Send: POST /api/message (polling picks it up + WS broadcasts) --- */
+        sendMsg() {
+          const input = document.getElementById('demo8-input');
+          const msg = input.value.trim() || 'Hello!';
+          input.value = '';
+
+          fetch(this.BASE + '/api/message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user: 'Presenter', text: msg }),
+          }).catch(() => {});
+        }
+
+        addNetRow(id, method, url, status, size) {
+          const el = document.getElementById(id);
+          const div = document.createElement('div');
+          div.className = 'net-row';
+          div.innerHTML = `<span class="method">${method}</span><span class="url">${url}</span><span class="status">${status}</span><span class="size">${size}</span>`;
+          el.appendChild(div);
+          el.scrollTop = el.scrollHeight;
+        }
+
+        updateCounters() {
+          document.getElementById('demo8-poll-reqs').textContent =
+            this.pollReqs;
+          document.getElementById('demo8-poll-overhead').textContent =
+            this.formatBytes(this.pollOverhead);
+          document.getElementById('demo8-poll-payload').textContent =
+            this.formatBytes(this.pollPayload);
+          document.getElementById('demo8-ws-reqs').textContent = this.wsFrames;
+          document.getElementById('demo8-ws-overhead').textContent =
+            this.formatBytes(this.wsOverhead);
+          document.getElementById('demo8-ws-payload').textContent =
+            this.formatBytes(this.wsPayload);
+        }
+      }
+
+      /* ===========================================
+   DEMO 12: LIFECYCLE VISUALIZATION
+   =========================================== */
+      class LifecycleDemo extends DemoController {
+        constructor() {
+          super();
+          this.socket = null;
+          document
+            .getElementById('demo12-kill')
+            .addEventListener('click', () => this.unexpectedClose());
+          document
+            .getElementById('demo12-normal')
+            .addEventListener('click', () => this.normalClose());
+        }
+
+        start() {
+          super.start();
+          this.log = document.getElementById('demo12-log');
+          this.log.innerHTML = '';
+          this.connect();
+        }
+
+        stop() {
+          super.stop();
+          if (this.socket) {
+            this.socket.disconnect();
+            this.socket = null;
+          }
+        }
+
+        connect() {
+          this.addLog('info', 'Opening connection...');
+          try {
+            this.socket = io('http://localhost:3000', {
+              transports: ['websocket'],
+              reconnection: true,
+              reconnectionDelay: 1000,
+              reconnectionDelayMax: 8000,
+              reconnectionAttempts: 10,
+            });
+
+            this.socket.on('connect', () => {
+              this.setStatus('green', 'Connected');
+              this.addLog(
+                'success',
+                'Connection opened (id: ' + this.socket.id + ')',
+              );
+              this.startHeartbeat();
+            });
+
+            this.socket.on('disconnect', (reason) => {
+              this.setStatus('red', 'Disconnected');
+              this.addLog('error', '⚠ Connection lost (' + reason + ')');
+              // Unexpected close: server kicked us — reconnect manually
+              if (reason === 'io server disconnect' && this._shouldReconnect) {
+                this._shouldReconnect = false;
+                this.addLog('warn', 'Unexpected — attempting to reconnect...');
+                this.socket.connect();
+              }
+            });
+
+            this.socket.io.on('reconnect_attempt', (attempt) => {
+              this.setStatus('amber', 'Reconnecting...');
+              this.addLog('warn', 'Reconnecting... (attempt ' + attempt + ')');
+            });
+
+            this.socket.io.on('reconnect', (attempt) => {
+              this.setStatus('green', 'Connected');
+              this.addLog(
+                'success',
+                'Reconnected after ' + attempt + ' attempt(s)',
+              );
+            });
+
+            this.socket.io.on('reconnect_failed', () => {
+              this.setStatus('red', 'Failed');
+              this.addLog('error', 'Reconnection failed — giving up');
+            });
+
+            this.socket.on('pong-server', () => {
+              var latency = Math.round(300 + Math.random() * 700);
+              var self = this;
+              setTimeout(function () {
+                self.addLog('success', 'Pong received (' + latency + 'ms)');
+              }, latency);
+            });
+          } catch (e) {
+            this.setStatus('red', 'Error');
+            this.addLog('error', 'Could not connect to server');
+          }
+        }
+
+        startHeartbeat() {
+          this.addInterval(() => {
+            if (!this.socket || !this.socket.connected) return;
+            this.addLog('info', 'Ping sent');
+            this.socket.emit('ping-server');
+          }, 3000);
+        }
+
+        normalClose() {
+          var btn = document.getElementById('demo12-normal');
+          if (this.socket && this.socket.connected) {
+            // Disconnect
+            this._shouldReconnect = false;
+            this.addLog(
+              'info',
+              'Normal close — client disconnecting gracefully',
+            );
+            this.socket.disconnect();
+            this.setStatus('green', 'Closed (1000)');
+            this.addLog('success', 'Connection closed normally ✓');
+            btn.textContent = 'Connect';
+            btn.style.background = '#4361ee';
+          } else {
+            // Reconnect
+            this.addLog('info', 'Opening connection...');
+            this.socket.connect();
+            btn.textContent = 'Normal Close';
+            btn.style.background = '#22c55e';
+          }
+        }
+
+        unexpectedClose() {
+          if (!this.socket || !this.socket.connected) return;
+          this._shouldReconnect = false; // prevent auto-reconnect
+          this.addLog('warn', 'Simulating unexpected close...');
+          this.socket.emit('force disconnect');
+
+          // Simulate exponential backoff: 1s → 2s → 4s → then reconnect
+          var self = this;
+          var delays = [1000, 2000, 4000];
+          var total = 0;
+
+          delays.forEach(function (delay, i) {
+            total += delay;
+            setTimeout(function () {
+              self.setStatus('amber', 'Reconnecting...');
+              self.addLog(
+                'warn',
+                'Retry #' +
+                  (i + 1) +
+                  ' failed — waiting ' +
+                  (delays[i + 1] ? delays[i + 1] / 1000 + 's' : '') +
+                  '...',
+              );
+            }, total);
+          });
+
+          // After all retries, actually reconnect
+          total += 2000;
+          setTimeout(function () {
+            self.addLog('info', 'Retry #4 — connecting...');
+            self.socket.connect();
+            var btn = document.getElementById('demo12-normal');
+            btn.textContent = 'Normal Close';
+            btn.style.background = '#22c55e';
+          }, total);
+        }
+
+        setStatus(color, text) {
+          const dot = document.getElementById('demo12-dot');
+          dot.className = 'status-dot status-dot--' + color;
+          document.getElementById('demo12-status').textContent = text;
+        }
+
+        addLog(type, msg) {
+          const entry = document.createElement('div');
+          entry.className = 'log-entry log-entry--' + type;
+          entry.innerHTML = `<span class="time">[${this.now()}]</span>${msg}`;
+          this.log.appendChild(entry);
+          this.log.scrollTop = this.log.scrollHeight;
+        }
+      }
+
+      /* ===========================================
+   DEMO 18: LIVE CHAT + MESSAGE PATTERNS
+   =========================================== */
+      class ChatDemo extends DemoController {
+        constructor() {
+          super();
+          this.messagesEl = document.getElementById('demo18-messages');
+          this.usersEl = document.getElementById('demo18-users');
+          this.modeSelect = document.getElementById('demo18-mode');
+          this.targetSelect = document.getElementById('demo18-target');
+          this.socket = null;
+          this.users = []; // { nickname, room, socketId }
+          this.isSimulation = false;
+
+          this.modeSelect.addEventListener('change', () => {
+            this.targetSelect.style.display =
+              this.modeSelect.value === 'direct' ? '' : 'none';
+          });
+
+          document
+            .getElementById('demo18-send')
+            .addEventListener('click', () => this.sendMsg());
+          document
+            .getElementById('demo18-input')
+            .addEventListener('keydown', (e) => {
+              if (e.key === 'Enter') this.sendMsg();
+            });
+        }
+
+        start() {
+          super.start();
+          this.tryConnect();
+        }
+
+        stop() {
+          super.stop();
+          if (this.socket) {
+            this.socket.close();
+            this.socket = null;
+          }
+        }
+
+        tryConnect() {
+          try {
+            if (typeof io !== 'undefined') {
+              this.socket = io('http://localhost:3000', {
+                transports: ['websocket'],
+              });
+              this.socket.on('connect', () => {
+                this.setStatus('green', 'Connected to server');
+                this.addMsg('System', 'Connected to chat server');
+              });
+              this.socket.on('user list', (users) => {
+                this.users = users;
+                this.renderUsers();
+                this.updateTargetSelect();
+              });
+              this.socket.on('chat message', (data) => {
+                this.addMsg(data.user, data.text);
+                this.flashCards(null, data.text); // flash all
+              });
+              this.socket.on('room message', (data) => {
+                this.addMsg(data.user, data.text, '[' + data.room + '] ');
+                this.flashCards(data.room, data.text);
+              });
+              this.socket.on('private message', (data) => {
+                this.addMsg(data.user, data.text, '(DM) ');
+                // flash only the targeted user
+                const cards = this.usersEl.querySelectorAll('.user-card');
+                cards.forEach((c) => {
+                  if (
+                    c.dataset.socketId === data.from ||
+                    c.querySelector('.card-name').textContent === data.user
+                  ) {
+                    this.flashOne(c, data.text);
+                  }
+                });
+              });
+              this.socket.on('disconnect', () => {
+                this.setStatus('red', 'Disconnected');
+              });
+              this.socket.on('connect_error', () => {
+                this.fallbackMode();
+              });
+            } else {
+              this.fallbackMode();
+            }
+          } catch (e) {
+            this.fallbackMode();
+          }
+        }
+
+        fallbackMode() {
+          this.isSimulation = true;
+          this.setStatus('amber', 'Simulation mode (no server)');
+          this.addMsg(
+            'System',
+            'Server not available — running in simulation mode',
+          );
+          this.users = [
+            { nickname: 'Lily', room: 'Room A', socketId: 'fake-0' },
+            { nickname: 'Jake', room: 'Room B', socketId: 'fake-1' },
+            { nickname: 'Nina', room: 'Room A', socketId: 'fake-2' },
+          ];
+          this.renderUsers();
+          this.updateTargetSelect();
+        }
+
+        renderUsers() {
+          this.usersEl.innerHTML = '';
+          this.users.forEach((u) => {
+            const card = document.createElement('div');
+            card.className = 'user-card';
+            card.dataset.socketId = u.socketId;
+            card.dataset.room = u.room === 'Room A' ? 'A' : 'B';
+            const initial = u.nickname.charAt(0).toUpperCase();
+            const roomColor =
+              u.room === 'Room A' ? 'var(--accent)' : 'var(--amber)';
+            card.innerHTML =
+              '<div class="card-avatar">' +
+              initial +
+              '</div>' +
+              '<div class="card-name">' +
+              u.nickname +
+              '</div>' +
+              '<div class="card-room" style="color:' +
+              roomColor +
+              '">' +
+              u.room +
+              '</div>' +
+              '<div class="msg-bubble"></div>';
+            this.usersEl.appendChild(card);
+          });
+        }
+
+        updateTargetSelect() {
+          this.targetSelect.innerHTML = '';
+          this.users.forEach((u) => {
+            const opt = document.createElement('option');
+            opt.value = u.socketId;
+            opt.textContent = u.nickname;
+            this.targetSelect.appendChild(opt);
+          });
+        }
+
+        sendMsg() {
+          const input = document.getElementById('demo18-input');
+          const msg = input.value.trim() || 'Hello!';
+          input.value = '';
+          const mode = this.modeSelect.value;
+
+          if (this.socket && this.socket.connected) {
+            const payload = {
+              mode,
+              text: msg,
+              user: 'Presenter',
+              targetRoom:
+                mode === 'roomA'
+                  ? 'Room A'
+                  : mode === 'roomB'
+                    ? 'Room B'
+                    : undefined,
+              targetSocketId:
+                mode === 'direct' ? this.targetSelect.value : undefined,
+            };
+            this.socket.emit('presenter message', payload);
+          } else if (this.isSimulation) {
+            this.simulateSend(mode, msg);
+          }
+        }
+
+        simulateSend(mode, msg) {
+          this.clearFlash();
+          const cards = this.usersEl.querySelectorAll('.user-card');
+          if (mode === 'broadcast') {
+            this.addMsg('Presenter', msg);
+            cards.forEach((c) => this.flashOne(c, msg));
+          } else if (mode === 'roomA' || mode === 'roomB') {
+            const room = mode === 'roomA' ? 'A' : 'B';
+            const label = mode === 'roomA' ? 'Room A' : 'Room B';
+            this.addMsg('Presenter', msg, '[' + label + '] ');
+            cards.forEach((c) => {
+              if (c.dataset.room === room) this.flashOne(c, msg);
+            });
+          } else if (mode === 'direct') {
+            const targetId = this.targetSelect.value;
+            const targetUser = this.users.find((u) => u.socketId === targetId);
+            this.addMsg('Presenter', msg, '(DM) ');
+            cards.forEach((c) => {
+              if (c.dataset.socketId === targetId) this.flashOne(c, msg);
+            });
+          }
+          this.addTimeout(() => this.clearFlash(), 2000);
+        }
+
+        flashCards(room, msg) {
+          this.clearFlash();
+          const cards = this.usersEl.querySelectorAll('.user-card');
+          cards.forEach((c) => {
+            if (!room || c.dataset.room === (room === 'Room A' ? 'A' : 'B')) {
+              this.flashOne(c, msg);
+            }
+          });
+          this.addTimeout(() => this.clearFlash(), 2000);
+        }
+
+        flashOne(card, msg) {
+          card.classList.add('flash');
+          const bubble = card.querySelector('.msg-bubble');
+          if (bubble) bubble.textContent = msg;
+        }
+
+        clearFlash() {
+          this.usersEl.querySelectorAll('.user-card').forEach((c) => {
+            c.classList.remove('flash');
+          });
+        }
+
+        addMsg(user, text, prefix) {
+          const div = document.createElement('div');
+          div.className = 'chat-message';
+          const pfx = prefix
+            ? '<span class="sender" style="opacity:0.5">' + prefix + '</span>'
+            : '';
+          div.innerHTML =
+            pfx + '<span class="sender">' + user + '</span>' + text;
+          this.messagesEl.appendChild(div);
+          this.messagesEl.scrollTop = this.messagesEl.scrollHeight;
+        }
+
+        setStatus(color, text) {
+          document.getElementById('demo18-dot').className =
+            'status-dot status-dot--' + color;
+          document.getElementById('demo18-conn-status').textContent = text;
+        }
+      }
+
+      /* ===========================================
+   INLINE EDITOR
+   =========================================== */
+      class InlineEditor {
+        constructor() {
+          this.isActive = false;
+          this.toggle = document.getElementById('editToggle');
+          this.hotzone = document.getElementById('editHotzone');
+          this.toast = document.getElementById('saveToast');
+          this.editableSelectors =
+            '.slide-title, .slide-h2, .slide-h3, .slide-body, .demo-col-label, .section-num, p, li, h2, h3, strong';
+          let hideTimeout = null;
+
+          this.toggle.addEventListener('click', () => this.toggleEditMode());
+
+          this.hotzone.addEventListener('mouseenter', () => {
+            clearTimeout(hideTimeout);
+            this.toggle.classList.add('show');
+          });
+          this.hotzone.addEventListener('mouseleave', () => {
+            hideTimeout = setTimeout(() => {
+              if (!this.isActive) this.toggle.classList.remove('show');
+            }, 400);
+          });
+          this.toggle.addEventListener('mouseenter', () =>
+            clearTimeout(hideTimeout),
+          );
+          this.toggle.addEventListener('mouseleave', () => {
+            hideTimeout = setTimeout(() => {
+              if (!this.isActive) this.toggle.classList.remove('show');
+            }, 400);
+          });
+
+          this.hotzone.addEventListener('click', () => this.toggleEditMode());
+
+          document.addEventListener('keydown', (e) => {
+            if (
+              (e.key === 'e' || e.key === 'E') &&
+              !e.target.getAttribute('contenteditable') &&
+              e.target.tagName !== 'INPUT' &&
+              e.target.tagName !== 'SELECT'
+            ) {
+              this.toggleEditMode();
+            }
+            if (e.ctrlKey && e.key === 's' && this.isActive) {
+              e.preventDefault();
+              this.save();
+            }
+          });
+
+          this.loadFromStorage();
+        }
+
+        toggleEditMode() {
+          this.isActive = !this.isActive;
+          this.toggle.classList.toggle('active', this.isActive);
+          if (this.isActive) {
+            this.toggle.classList.add('show');
+          }
+
+          document.querySelectorAll(this.editableSelectors).forEach((el) => {
+            if (
+              el.closest('.demo-slide') ||
+              el.closest('.nav-dots') ||
+              el.closest('.edit-toggle') ||
+              el.closest('script')
+            )
+              return;
+            if (this.isActive) {
+              el.setAttribute('contenteditable', 'true');
+              el.addEventListener('input', this._onInput);
+            } else {
+              el.removeAttribute('contenteditable');
+              el.removeEventListener('input', this._onInput);
+            }
+          });
+
+          if (!this.isActive) this.save();
+        }
+
+        _onInput = () => {
+          clearTimeout(this._saveTimeout);
+          this._saveTimeout = setTimeout(() => this.save(), 1000);
+        };
+
+        save() {
+          const data = {};
+          document
+            .querySelectorAll('[contenteditable="true"]')
+            .forEach((el, i) => {
+              data[`el_${i}_${el.className.split(' ')[0]}`] = el.innerHTML;
+            });
+          try {
+            localStorage.setItem('ws-presentation-edits', JSON.stringify(data));
+            this.showToast();
+          } catch (e) {
+            /* storage full or unavailable */
+          }
+        }
+
+        loadFromStorage() {
+          try {
+            const data = JSON.parse(
+              localStorage.getItem('ws-presentation-edits'),
+            );
+            if (!data) return;
+            /* Edits are session-persistent. Clear with localStorage.removeItem('ws-presentation-edits') */
+          } catch (e) {
+            /* no saved data */
+          }
+        }
+
+        showToast() {
+          this.toast.classList.add('show');
+          setTimeout(() => this.toast.classList.remove('show'), 1500);
+        }
+      }
+
+      /* ===========================================
+   INITIALIZATION
+   =========================================== */
+      window.demos = {
+        'polling-compare': new PollingComparisonDemo(),
+        'overhead-compare': new OverheadComparisonDemo(),
+        lifecycle: new LifecycleDemo(),
+        chat: new ChatDemo(),
+      };
+
+      const presentation = new SlidePresentation();
+      // const editor = new InlineEditor();
+
+      /* ── Slide 10: Ping/Pong visualization ── */
+      (function () {
+        var s10 = {
+          running: true,
+          timer: null,
+          pings: 0,
+          pongs: 0,
+          seq: 0,
+          FLY: 5000,
+        };
+
+        function s10El(id) {
+          return document.getElementById(id);
+        }
+
+        function s10Log(type, dir, msg) {
+          var logs = s10El('s10-log-list');
+          if (!logs) return;
+          var t = new Date().toLocaleTimeString('en-GB', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+          });
+          var a = dir === 'r' ? '\u2192' : dir === 'l' ? '\u2190' : '\u25CF';
+          var e = document.createElement('div');
+          e.className = 's10-log-entry s10-' + type + '-log';
+          e.innerHTML =
+            '<span class="s10-time">' +
+            t +
+            '</span><span class="s10-dir">' +
+            a +
+            '</span><span>' +
+            msg +
+            '</span>';
+          logs.appendChild(e);
+          logs.scrollTop = logs.scrollHeight;
+        }
+
+        function s10Packet(label, cls, dir) {
+          var w = s10El('s10-wire-area');
+          if (!w) return;
+          var p = document.createElement('div');
+          p.className = 's10-packet ' + cls + ' fly-' + dir;
+          p.textContent = label;
+          w.appendChild(p);
+          setTimeout(function () {
+            if (p.parentNode) p.remove();
+          }, s10.FLY + 200);
+        }
+
+        function s10Flash(id, cls) {
+          var el = s10El(id);
+          if (!el) return;
+          el.classList.add(cls);
+          setTimeout(function () {
+            el.classList.remove(cls);
+          }, s10.FLY);
+        }
+
+        function s10Stats() {
+          var ep = s10El('s10-pings');
+          if (ep) ep.textContent = s10.pings;
+          var eo = s10El('s10-pongs');
+          if (eo) eo.textContent = s10.pongs;
+        }
+
+        function s10Cycle() {
+          if (!s10.running) return;
+          s10.seq++;
+          s10.pings++;
+          var n = s10.seq;
+          s10Stats();
+          // Phase 1: Server (right) sends Ping ← toward Client (left)
+          s10Packet('PING #' + n, 'ping', 'l');
+          s10Log('ping', 'l', 'PING #' + n + ' sent by server \u2192 client');
+          s10Flash('s10-server-box', 's10-hl-ping');
+
+          // Phase 2: After Ping arrives (5s), Client (left) sends Pong → back to Server (right)
+          var lat = Math.round(30 + Math.random() * 90);
+          s10.timer = setTimeout(function () {
+            if (!s10.running) return;
+            s10.pongs++;
+            var el = s10El('s10-lat');
+            if (el) el.textContent = lat + 'ms';
+            s10Stats();
+            s10Packet('PONG #' + n, 'pong', 'r');
+            s10Log(
+              'pong',
+              'r',
+              'PONG #' + n + ' client \u2192 server (' + lat + 'ms)',
+            );
+            s10Flash('s10-client-box', 's10-hl-pong');
+
+            // Phase 3: After Pong arrives (5s), wait 1s then start next cycle
+            s10.timer = setTimeout(function () {
+              s10Cycle();
+            }, s10.FLY + 1000);
+          }, s10.FLY);
+        }
+
+        function s10Loop() {
+          clearTimeout(s10.timer);
+          if (s10.running) {
+            s10Cycle();
+          }
+        }
+
+        window.s10Toggle = function () {
+          s10.running = !s10.running;
+          var btn = s10El('s10-toggle');
+          if (btn) btn.textContent = s10.running ? 'Pause' : 'Start';
+          if (s10.running) s10Loop();
+          else clearTimeout(s10.timer);
+        };
+
+        window.s10ClearLog = function () {
+          var l = s10El('s10-log-list');
+          if (l) l.innerHTML = '';
+        };
+
+        s10Log('info', '', 'WebSocket connection established');
+        s10Loop();
+      })();
+    </script>
+
+    <!-- QR code generator -->
+    <script src="vendor/qrcode.min.js"></script>
+
+    <!-- Optional: Socket.IO client for live chat demo -->
+    <script src="vendor/socket.io.min.js" onerror=""></script>
+
+    <!-- Generate QR code for chat URL -->
+    <script>
+      (function () {
+        if (typeof qrcode === 'undefined') return;
+        var chatUrl = 'http://192.168.30.41:3000/chat';
+        document.getElementById('chat-url').textContent = chatUrl;
+        var qr = qrcode(0, 'M');
+        qr.addData(chatUrl);
+        qr.make();
+        document.getElementById('chat-qr').innerHTML = qr.createSvgTag(5, 0);
+      })();
+    </script>
+  </body>
+</html>
